@@ -156,9 +156,12 @@ function gameUpdate(dt)
 						scoreAdd = scoreAdd + (300 * combo)
 						comboPosY = ScreenSizeH*0.02
 						combo = combo + 1
-						fx:stop()
-						fx:setVolume(noteListDinamic[i].vol)
-						fx:play()
+						print(noteListDinamic[i].type)
+						if noteListDinamic[i].type ~= "Slider" then
+							fx:stop()
+							fx:setVolume(noteListDinamic[i].vol)
+							fx:play()
+						end
 						alphaEffect = 255
 						noteListDinamic[i].hasBeenHit = true
 					end

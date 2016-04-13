@@ -299,8 +299,11 @@ function parser.parseHitObject(str)
 		local curvePoints = string.split(curveParams, "|")
 		local pixelLength = params[8]
 		local sliderPoints = {}
+		objTypeId = "Slider"
 		
-		if curvePoints[1] == "B" or curvePoints[1] == "L" or curvePoints[1] == "P" then
+		print(curvePoints[1])
+		
+		if curvePoints[1] == "L" or curvePoints[1] == "B" then
 			table.insert(sliderPoints, x)
 			table.insert(sliderPoints, y)
 			
@@ -318,24 +321,24 @@ function parser.parseHitObject(str)
 			--sliderLengthInBeats = (pixelLength * repeatCount) / pxPerBeat
 			--local sliderLengthInBeats = pixelLength*1/pxPerBeat
 			--sliderEndTime = sliderLengthInBeats * MPB (of current section)
-			local mpb = 344.827586206897
+			local mpb = 476.19
 			local sliderEndTime = mpb *(pixelLength/sliderMultiplier) / 100
 			
 			table.insert(note, HitObjectCircle(x, y, objTime, objType, 0.7))
 			
 			
 			--Problema: o for deve ser executado em ticks, que nada mais são do que o valor da MPB dividido por alguma constante, determinei 8
-			variavel2 = sliderEndTime/(mpb/8)
-			print(variavel2)
+			variavel2 = sliderEndTime/(mpb/6)
+			--print(variavel2)
 			--Descobrir o valor do passo do for para que ele execute o mesmo arredondado pra baixo o numero de vezes calculado na variavel2
 			
-			for i = 0, 1, 0.05 do
+			for i = (1/variavel2), 1, (1/variavel2) do
 				bx,by = curve:evaluate(i)
 				--time + (float(k)/float(numSteps)) * float(sliderEndTime)
-				if i == 1 then
-					table.insert(note, HitObjectCircle(bx, y, objTime + (i)*sliderEndTime, objType, 0.8))
+				if i + (1/variavel2) > 1 then
+					table.insert(note, HitObjectCircle(bx, y, objTime + i*sliderEndTime, objType, 0.8))
 				else
-					table.insert(note, HitObjectCircle(bx, y, objTime + (i)*sliderEndTime, objType, 0.234))
+					table.insert(note, HitObjectCircle(bx, y, objTime + i*sliderEndTime, objTypeId, 0))
 				end
 			end
 		
