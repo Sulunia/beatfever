@@ -1,10 +1,11 @@
 --BeatFever fileparser module
 --Contains ".osu" file parsing functions
 local moduleName = "[FileParser]"
-
+noteCount = 1
 local fileLines =  {} --Where we'll hold the current osu file data.
 parser = {}
 local fileLoaded = nil
+local ObjectTypes = {HitCircle = 1, Slider = 2, NewCombo = 4, Spinner = 8}
 
 function parser.loadOsuFile(file)
 	fileLoaded = file
@@ -69,16 +70,16 @@ function parser.getTimingPoints()
 	end -- closes "for" loop
 		
 	for key2, point in ipairs(timingpointstring) do
-		--offset, mili per beat, meter, sampleType, sampleSet, vol, inherited, kiaitime
 		--thankfully this is static! which means it never changes... I hope.
 		parameters = string.split(point, ",")
-		newpoint = {parameters[1], tonumber(parameters[2]), tonumber(parameters[3]), tonumber(parameters[4]),
-		tonumber(parameters[5]), tonumber(parameters[6]), tonumber(parameters[7]), tonumber(parameters[8])}
+		newpoint = {offset = tonumber(parameters[1]), mpb = tonumber(parameters[2]), meter = tonumber(parameters[3]), sampleType = tonumber(parameters[4]),
+		sampleSet = tonumber(parameters[5]), volume = tonumber(parameters[6]), inherited = tonumber(parameters[7]), kiai = tonumber(parameters[8])}
+		--Offset, Milliseconds per Beat, Meter, Sample Type, Sample Set, Volume, Inherited, Kiai Mode
 		table.insert(timingpoint, newpoint)
 	end
 	
 	debugLog("Parsed timing points for osu file!", 1, moduleName)
-	return timingpoints
+	return timingpoint
 end
 
 function parser.getSongTitle()
@@ -127,6 +128,18 @@ function parser.getBMCreator()
 	end
 	--debugLog("Creator: "..creator[2], 1, moduleName)
 	return creator[2]
+end
+
+function parser.getSliderMultiplier()
+	for key, line in ipairs(fileLines) do
+		if #line>0 then
+			if string.find(line, "SliderMultiplier:") ~= nil then
+				multiplier = string.split(line, ':')
+			end
+		end
+	end
+	debugLog("Slider multiplier: "..multiplier[2], 1, moduleName)
+	return multiplier[2]
 end
 
 function parser.getCurrentLoadedFile()
@@ -229,26 +242,108 @@ function parser.getHitObjects()
 	
 	for key2, line in ipairs(splitLines) do
 		if #line > 3 then
-			params = string.split(line, ",")
-			objPosX = tonumber(params[1])
-			objPosY = tonumber(params[2])				--Copies common object parameters to vars
-			objTime = tonumber(params[3]) 
-			objType = tonumber(params[4]) 
-			
-			--if (objType == 1) or (objType == 5) then
-				note = HitObject(params[1], params[2], params[3], params[4])	--normal hitObject or normal hitobject + newCombo
-				table.insert(noteList, note)
-			--elseif (objType == 2) or (objType == 6) then
-			--	CurveLine = params[5]					--slider hitObject or slider hitObject + newCombo
-			--	objRepeat = tonumber(params[6])
-			--	pixelLenght = tonumber(params[7]) 		--pixelLenght deve ser calculado de acordo com o tamanho da tela?..
-				
-				--sliderEndTime = ((1000*60/mPerBeat) * (pixelLenght/1.4) / 100)
-			--	debugLog("Partial note type implementation! Object is slider, has been ignored!", 3, moduleName)
-			--else
-			--	debugLog("Unknown note type! HitObject is type "..objType..", has been ignored!", 3, moduleName)
-			--end
+			note = parser.parseHitObject(line)
+			for i, v in ipairs(note) do
+				table.insert(noteList, v)
+			end
 		end
 	end
 	return noteList
+end
+
+function parser.parseHitObject(str)
+	--Local vars for type
+	local HitCircle = false
+	local Spinner = false
+	local Slider = false
+	local NewCombo = false
+	local note = {}
+	local sliderMultiplier = parser.getSliderMultiplier()
+	
+	local params = string.split(str, ",")
+	local x = tonumber(params[1])
+	local y = tonumber(params[2])	--Copies common object parameters to vars
+	local objTime = tonumber(params[3]) 
+	local objType = tonumber(params[4]) 
+	
+	if (bit.band(objType, 1) > 0) then
+		HitCircle = true
+	end
+	
+	if (bit.band(objType, 2) > 0) then
+		Slider = true
+	end
+	
+	if (bit.band(objType, 4) > 0) then
+		NewCombo = true
+	end
+	
+	if (bit.band(objType, 8) > 0) then 
+		Spinner = true
+	end
+	--At this point, we just effin hope we have no sliding spinners or something
+	--Parse notes correctly
+	
+	if HitCircle then
+		--print("Parse hitCircle")
+		note[1] = HitObjectCircle(x, y, objTime, objType, 0.5)
+	end
+	
+	if Spinner then		
+		--print("Spinner detected. Skipping..")
+		note[1] = HitObjectCircle(x, y, objTime, objType, 0.5)
+	end
+	
+	if Slider then
+		local curveParams = params[6]
+		local curvePoints = string.split(curveParams, "|")
+		local pixelLength = params[8]
+		local sliderPoints = {}
+		
+		if curvePoints[1] == "B" or curvePoints[1] == "L" or curvePoints[1] == "P" then
+			table.insert(sliderPoints, x)
+			table.insert(sliderPoints, y)
+			
+			for i=2, #curvePoints do
+				local point = string.split(curvePoints[i], ":")
+				local x = tonumber(point[1])
+				local y = tonumber(point[2])
+				
+				table.insert(sliderPoints, x)
+				table.insert(sliderPoints, y)
+			end
+			
+			local curve = love.math.newBezierCurve(sliderPoints)
+			local pxPerBeat = sliderMultiplier * 100 * 1 --Fixed one for now, should be section current velocity
+			--sliderLengthInBeats = (pixelLength * repeatCount) / pxPerBeat
+			--local sliderLengthInBeats = pixelLength*1/pxPerBeat
+			--sliderEndTime = sliderLengthInBeats * MPB (of current section)
+			local mpb = 344.827586206897
+			local sliderEndTime = mpb *(pixelLength/sliderMultiplier) / 100
+			
+			table.insert(note, HitObjectCircle(x, y, objTime, objType, 0.7))
+			
+			
+			--Problema: o for deve ser executado em ticks, que nada mais são do que o valor da MPB dividido por alguma constante, determinei 8
+			variavel2 = sliderEndTime/(mpb/8)
+			print(variavel2)
+			--Descobrir o valor do passo do for para que ele execute o mesmo arredondado pra baixo o numero de vezes calculado na variavel2
+			
+			for i = 0, 1, 0.05 do
+				bx,by = curve:evaluate(i)
+				--time + (float(k)/float(numSteps)) * float(sliderEndTime)
+				if i == 1 then
+					table.insert(note, HitObjectCircle(bx, y, objTime + (i)*sliderEndTime, objType, 0.8))
+				else
+					table.insert(note, HitObjectCircle(bx, y, objTime + (i)*sliderEndTime, objType, 0.234))
+				end
+			end
+		
+		else
+			table.insert(note, HitObjectCircle(x, y, objTime, objType, 0.8))
+		end
+	
+	end
+	
+	return note
 end

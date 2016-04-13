@@ -6,7 +6,7 @@ moduleName = "[GameObjects]"
 
 MenuObject = class("MenuObject")
 Song = class("Song")
-HitObject = class("HitObject")
+HitObjectCircle = class("HitObjectCircle")
 
 function MenuObject:init(imageIdle, imageSelected, song) --Constructor
 	self.imageIdle = imageIdle
@@ -101,11 +101,12 @@ end
 
 --------------------------------------------------------
 
-function HitObject:init(posX, posY, nTime, objType) --Partial Implementation!
+function HitObjectCircle:init(posX, posY, nTime, objType, vol) --Partial Implementation!
 	self.x = posX
 	self.y = posY
 	self.objTime = nTime
 	self.type = objType
+	self.vol = vol
 	self.size = {}
 	self.position = {}
 	self.boundaries = {}

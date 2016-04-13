@@ -9,9 +9,10 @@ require("gameover")
 require("fileParser")
 class = require("modules/externals/30log") -- Object Orientation library, needed for some stuff
 require("modules/gameObjects") 		 -- Now we create the objects we need in order to get stuff working
-require("modules/externals/lovedebug")
+--require("modules/externals/lovedebug")
 require("game")
 require("modules/externals/extractor")
+bit = require("bit")
 
 reloadSelectionScreen = false
 
@@ -84,7 +85,13 @@ function love.update(dt)
 	oldMouseClicked = newMouseClicked
 	newMouseClicked = love.mouse.isDown(1)
 	
-	--FPS at 120
+	--FPS at 120 on menus, 200 ingame
+	if Screen == 2 then
+		min_dt = 1/200
+	else
+		min_dt = 1/120
+	end
+	
 	next_time = next_time + min_dt
 	
 	-- Update screen sizes only on some frames
@@ -125,7 +132,6 @@ end
 
 function love.draw()
 	-- Screen switcharoo magic
-	
 	if Screen == 0 then
 		splashDraw()
 	elseif Screen == 1 then
@@ -151,9 +157,8 @@ function love.draw()
 	if next_time <= cur_time then
       next_time = cur_time
       return
-   end
-   
-   love.timer.sleep(next_time - cur_time)
+	end
+	love.timer.sleep(next_time - cur_time)
 end
 
 -- TODO list

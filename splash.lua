@@ -291,7 +291,8 @@ function splashDraw()
 	love.graphics.push()
 		-- Center everything
 		love.graphics.translate(mx * mouseSens, my * mouseSens)
-		love.graphics.setColor(255, 255, 255, clamp(255/1.6, 255, 1))
+		love.graphics.setBackgroundColor(0, 0, 0)
+		love.graphics.setColor(255, 255, 255, 159)
 		love.graphics.draw(background, 0, 0, 0, ScreenSizeW/(background:getWidth()-(background:getWidth()*0.2)), ScreenSizeH/(background:getHeight()-(background:getHeight()*0.2)), background:getWidth()*0.1, background:getHeight()*0.1)
 		--Shear effect to align with logo
 		love.graphics.shear(-0.2, 0)

@@ -22,6 +22,8 @@ local run = false
 local score = 0
 local scoreAdd = 0
 local scorePosY = 0
+local comboPosY = 0
+
 
 function gameLoad(selectedSong)
 	love.graphics.setBackgroundColor(0, 0, 0, 255)
@@ -38,14 +40,36 @@ function gameLoad(selectedSong)
 	fx:setVolume(0.5)
 	fxMiss = love.audio.newSource("uisounds/miss.ogg", "static")
 	fxMiss:setVolume(1.0)
-	--End of graphics loading
+	--End of graphics loading	
 	
-	--Start game logic
+	--Parse stuff and load music
 	debugLog("Parsing selected file", 1, moduleName)
 	parser.loadOsuFile(selectedSong.filePath)
 	loadSong(selectedSong.audioFile)
 	noteListStatic = parser.getHitObjects()
 	noteListDinamic = parser.getHitObjects()
+	
+	--Begin BPM calculation
+	timingPoints = parser.getTimingPoints()
+	curTimingPoint = 1
+	initialTime = timingPoints[1].offset
+	BPMList = {}
+	curMPB = timingPoints[1].mpb
+	while (initialTime < tonumber(noteListStatic[#noteListStatic].objTime)) do
+		initialTime = initialTime + curMPB
+		if timingPoints[curTimingPoint + 1] ~= nil then
+			if (initialTime > timingPoints[curTimingPoint + 1].offset) then
+				if tonumber(timingPoints[curTimingPoint + 1].inherited) == 1 then
+					curMPB = timingPoints[curTimingPoint + 1].mpb
+				end
+				curTimingPoint = curTimingPoint + 1
+			end
+		end
+		table.insert(BPMList, initialTime)
+	end
+	curTimingPoint = 1
+	
+	--Begins game
 	debugLog("Playing the song using interpolated timer", 1, moduleName)
 	playInterpolated(dt)
 	playerImageSize, playerImagePos, playerImageBoundaries = getCurrentSize(playerImageNormal, "player", playerPaddleSize, PlayerX, -ScreenSizeH/2.17, false)
@@ -59,6 +83,7 @@ function gameLoad(selectedSong)
 end
 
 function gameUpdate(dt)
+	--Var updates
 	currentSongTime = getInterpolatedTimer(dt)
 	noteDrawOffset = ScreenSizeH - (ScreenSizeH - playerImageBoundaries.Y1)
 	screenRatio = ScreenSizeH/384
@@ -76,6 +101,14 @@ function gameUpdate(dt)
 			screenAlpha = 0
 			songVol = 0
 			print("Skipped!")
+		end
+	end
+	
+	--BPMs on the score
+	if currentSongTime > BPMList[curTimingPoint] then
+		scorePosY = ScreenSizeH*0.06
+		if BPMList[curTimingPoint+1] ~= nil then
+			curTimingPoint = curTimingPoint + 1
 		end
 	end
 	
@@ -121,9 +154,10 @@ function gameUpdate(dt)
 							end
 						end
 						scoreAdd = scoreAdd + (300 * combo)
-						scorePosY = ScreenSizeH*0.02
+						comboPosY = ScreenSizeH*0.02
 						combo = combo + 1
 						fx:stop()
+						fx:setVolume(noteListDinamic[i].vol)
 						fx:play()
 						alphaEffect = 255
 						noteListDinamic[i].hasBeenHit = true
@@ -146,6 +180,7 @@ function gameUpdate(dt)
 	songVol = lerp(songVol, 0.87, 0.08)
 	score = lerp(score, scoreAdd, 0.2)
 	scorePosY = lerp(scorePosY, 0, 0.2)
+	comboPosY = lerp(comboPosY, 0, 0.2)
 	
 	if autoPlay then
 		if PlayerX ~= (noteListDinamic[nextNote].x-256)*screenRatio then
@@ -183,7 +218,7 @@ function gameDraw()
 	--Combo count
 	love.graphics.setFont(ingameFont)
 	love.graphics.setColor(255, 255, 255, 255)
-	love.graphics.printf(combo,playerImageBoundaries.X1, (ScreenSizeH/1.8)+(scorePosY/2), playerImageBoundaries.X2 - playerImageBoundaries.X1, "center" )
+	love.graphics.printf(combo,playerImageBoundaries.X1, (ScreenSizeH/1.8)+(comboPosY/2), playerImageBoundaries.X2 - playerImageBoundaries.X1, "center" )
 	
 	--Glow effect
 	love.graphics.setColor(80, 255, 40, alphaEffect)
