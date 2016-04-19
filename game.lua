@@ -34,7 +34,8 @@ function gameLoad(selectedSong)
 	playerImageFX = love.graphics.newImage("img/garsom_hitech.png")
 	playerImageNormal = love.graphics.newImage("img/garsom_semswag.png")
 	
-	pellet1 = love.graphics.newImage("img/fruit_3.png")
+	pelletHitCircle = love.graphics.newImage("img/fruit_3.png")
+	pelletSlidertick = love.graphics.newImage("img/fruteenha.png")
 	
 	fx = love.audio.newSource("uisounds/normal-hitclap.wav", "static")
 	fx:setVolume(0.5)
@@ -46,8 +47,10 @@ function gameLoad(selectedSong)
 	debugLog("Parsing selected file", 1, moduleName)
 	parser.loadOsuFile(selectedSong.filePath)
 	loadSong(selectedSong.audioFile)
-	noteListStatic = parser.getHitObjects()
-	noteListDinamic = parser.getHitObjects()
+	
+	--Generate a list suitable for messing around with it's values and a static list for original value referencing
+	noteListStatic = parser.getHitObjects(pelletHitCircle, pelletSlidertick)
+	noteListDinamic = parser.getHitObjects(pelletHitCircle, pelletSlidertick)
 	
 	--Begin BPM calculation
 	timingPoints = parser.getTimingPoints()
@@ -55,6 +58,7 @@ function gameLoad(selectedSong)
 	initialTime = timingPoints[1].offset
 	BPMList = {}
 	curMPB = timingPoints[1].mpb
+	
 	while (initialTime < tonumber(noteListStatic[#noteListStatic].objTime)) do
 		initialTime = initialTime + curMPB
 		if timingPoints[curTimingPoint + 1] ~= nil then
@@ -144,38 +148,41 @@ function gameUpdate(dt)
 		noteListDinamic[i].objTime = noteListDinamic[i].objTime*(speed*0.5) - currentSongTime*(speed*0.5)
 		
 		--Collision with notes
-		if noteListDinamic[i].objTime + noteDrawOffset <= playerImageBoundaries.Y1 then
-				if ScreenSizeW/2-((noteListDinamic[i].x-256)*screenRatio) > playerImageBoundaries.X1-(playerImageBoundaries.X1*0.013)
-				and ScreenSizeW/2-((noteListDinamic[i].x-256)*screenRatio) < playerImageBoundaries.X2*1.013 then
-					if noteListDinamic[i].hasBeenHit == false then
-						if autoPlay then
-							if noteListDinamic[nextNote+1] ~= nil then
-								nextNote = nextNote + 1
-							end
+		if noteListDinamic[i].objTime + noteDrawOffset <= playerImageBoundaries.Y1 then	
+			
+			if ScreenSizeW/2-((noteListDinamic[i].x-256)*screenRatio) > playerImageBoundaries.X1-(playerImageBoundaries.X1*0.013)
+			and ScreenSizeW/2-((noteListDinamic[i].x-256)*screenRatio) < playerImageBoundaries.X2*1.013 then
+				
+				if noteListDinamic[i].hasBeenHit == false then
+					if autoPlay then
+						if noteListDinamic[nextNote+1] ~= nil then
+							nextNote = nextNote + 1
 						end
-						scoreAdd = scoreAdd + (300 * combo)
-						comboPosY = ScreenSizeH*0.02
-						combo = combo + 1
-						print(noteListDinamic[i].type)
-						if noteListDinamic[i].type ~= "Slider" then
-							fx:stop()
-							fx:setVolume(noteListDinamic[i].vol)
-							fx:play()
-						end
-						alphaEffect = 255
-						noteListDinamic[i].hasBeenHit = true
 					end
-				elseif noteListDinamic[i].hasBeenHit == false then
-					if noteListDinamic[nextNote+1] ~= nil then
-						nextNote = nextNote + 1
-					end
+					scoreAdd = scoreAdd + (300 * combo)
+					comboPosY = ScreenSizeH*0.02
+					combo = combo + 1
+					fx:stop()
+					fx:setVolume(noteListDinamic[i].vol)
+					fx:play()
+					alphaEffect = 255
 					noteListDinamic[i].hasBeenHit = true
-					if combo > 35 then
-						fxMiss:play()
-					end
-					combo = 1
 				end
+				
+			elseif noteListDinamic[i].hasBeenHit == false then
+			
+				if noteListDinamic[nextNote+1] ~= nil then
+					nextNote = nextNote + 1
+				end
+				noteListDinamic[i].hasBeenHit = true
+				if combo > 35 then
+					fxMiss:play()
+				end
+				combo = 1
+				
 			end
+			
+		end
 	end																			
 	
 	screenAlpha = lerp(screenAlpha, 60, 0.06)
@@ -205,7 +212,7 @@ function gameDraw()
 	for i = 1, #noteListDinamic do
 		if noteListDinamic[i].hasBeenHit == false then
 			if tonumber(noteListDinamic[i].objTime) < ScreenSizeH then
-				getCurrentSize(pellet1, noteListDinamic[i].x, 1, (noteListDinamic[i].x-256)*screenRatio, ScreenSizeH/2+noteListDinamic[i].objTime - noteDrawOffset, true)
+				getCurrentSize(noteListDinamic[i].image, "HitObject", 1.2, (noteListDinamic[i].x-256)*screenRatio, ScreenSizeH/2+noteListDinamic[i].objTime - noteDrawOffset, true)
 			end
 		end
 	end

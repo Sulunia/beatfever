@@ -7,9 +7,10 @@ require("splash")
 require("selection")
 require("gameover")
 require("fileParser")
+require("modules/objectParsing")
 class = require("modules/externals/30log") -- Object Orientation library, needed for some stuff
 require("modules/gameObjects") 		 -- Now we create the objects we need in order to get stuff working
---require("modules/externals/lovedebug")
+--require("modules/externals/lovedebug") --Unexpected crashes often get handled by this, also provides a nice console
 require("game")
 require("modules/externals/extractor")
 bit = require("bit")

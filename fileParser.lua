@@ -7,6 +7,10 @@ parser = {}
 local fileLoaded = nil
 local ObjectTypes = {HitCircle = 1, Slider = 2, NewCombo = 4, Spinner = 8}
 
+local timingPointList = {}
+local timingPointIndex = 1
+
+
 function parser.loadOsuFile(file)
 	fileLoaded = file
 	fileLines = {}
@@ -220,12 +224,15 @@ function parser.getBGFile()
 	end
 end
 
-function parser.getHitObjects()
+function parser.getHitObjects(hitCircleImage, sliderTickImage)
+	--Sets up graphics to be used in the ingame
+	objectParser.setNoteGraphics(hitCircleImage, sliderTickImage)
+	
 	local noteList = {}
 	local splitLines = {}
 	local foundSection = false
-	debugLog("In function parser.getHitObjects()", 2, moduleName)
-	debugLog("Not all notes are being currently parsed!", 2, moduleName)
+	timingPointList = parser.getTimingPoints()
+	
 	
 	for key1, line in ipairs(fileLines) do
 		if #line > 0 then
@@ -248,6 +255,7 @@ function parser.getHitObjects()
 			end
 		end
 	end
+	
 	return noteList
 end
 
@@ -257,96 +265,33 @@ function parser.parseHitObject(str)
 	local Spinner = false
 	local Slider = false
 	local NewCombo = false
-	local note = {}
-	local sliderMultiplier = parser.getSliderMultiplier()
 	
+	--Get note type from string
 	local params = string.split(str, ",")
-	local x = tonumber(params[1])
-	local y = tonumber(params[2])	--Copies common object parameters to vars
-	local objTime = tonumber(params[3]) 
 	local objType = tonumber(params[4]) 
 	
+	--Determines note type based on splitted value
 	if (bit.band(objType, 1) > 0) then
-		HitCircle = true
+		--Hit circle
+		note = objectParser.parseHitCircle(str)
 	end
 	
 	if (bit.band(objType, 2) > 0) then
-		Slider = true
+		--Slider
+		note = objectParser.parseSlider(str)
 	end
 	
 	if (bit.band(objType, 4) > 0) then
-		NewCombo = true
+		--NewCombo = true
 	end
 	
 	if (bit.band(objType, 8) > 0) then 
-		Spinner = true
+		--Spinner
+		note = objectParser.parseHitCircle(str)
 	end
 	--At this point, we just effin hope we have no sliding spinners or something
-	--Parse notes correctly
-	
-	if HitCircle then
-		--print("Parse hitCircle")
-		note[1] = HitObjectCircle(x, y, objTime, objType, 0.5)
-	end
-	
-	if Spinner then		
-		--print("Spinner detected. Skipping..")
-		note[1] = HitObjectCircle(x, y, objTime, objType, 0.5)
-	end
-	
-	if Slider then
-		local curveParams = params[6]
-		local curvePoints = string.split(curveParams, "|")
-		local pixelLength = params[8]
-		local sliderPoints = {}
-		objTypeId = "Slider"
-		
-		print(curvePoints[1])
-		
-		if curvePoints[1] == "L" or curvePoints[1] == "B" then
-			table.insert(sliderPoints, x)
-			table.insert(sliderPoints, y)
-			
-			for i=2, #curvePoints do
-				local point = string.split(curvePoints[i], ":")
-				local x = tonumber(point[1])
-				local y = tonumber(point[2])
-				
-				table.insert(sliderPoints, x)
-				table.insert(sliderPoints, y)
-			end
-			
-			local curve = love.math.newBezierCurve(sliderPoints)
-			local pxPerBeat = sliderMultiplier * 100 * 1 --Fixed one for now, should be section current velocity
-			--sliderLengthInBeats = (pixelLength * repeatCount) / pxPerBeat
-			--local sliderLengthInBeats = pixelLength*1/pxPerBeat
-			--sliderEndTime = sliderLengthInBeats * MPB (of current section)
-			local mpb = 476.19
-			local sliderEndTime = mpb *(pixelLength/sliderMultiplier) / 100
-			
-			table.insert(note, HitObjectCircle(x, y, objTime, objType, 0.7))
-			
-			
-			--Problema: o for deve ser executado em ticks, que nada mais são do que o valor da MPB dividido por alguma constante, determinei 8
-			variavel2 = sliderEndTime/(mpb/6)
-			--print(variavel2)
-			--Descobrir o valor do passo do for para que ele execute o mesmo arredondado pra baixo o numero de vezes calculado na variavel2
-			
-			for i = (1/variavel2), 1, (1/variavel2) do
-				bx,by = curve:evaluate(i)
-				--time + (float(k)/float(numSteps)) * float(sliderEndTime)
-				if i + (1/variavel2) > 1 then
-					table.insert(note, HitObjectCircle(bx, y, objTime + i*sliderEndTime, objType, 0.8))
-				else
-					table.insert(note, HitObjectCircle(bx, y, objTime + i*sliderEndTime, objTypeId, 0))
-				end
-			end
-		
-		else
-			table.insert(note, HitObjectCircle(x, y, objTime, objType, 0.8))
-		end
-	
-	end
-	
+
+	--Return to the user the object processed (table)
+	--assert(note, "Returned note is nil!")
 	return note
 end

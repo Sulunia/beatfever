@@ -4,6 +4,8 @@
 function love.conf(t)
 t.console = true
 t.window.title = "BeatFever Mania"
+--t.window.width = 864
+--t.window.height = 486
 t.window.width = 1280
 t.window.height = 720
 t.window.display = 2
