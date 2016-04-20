@@ -24,6 +24,8 @@ local scoreAdd = 0
 local scorePosY = 0
 local comboPosY = 0
 
+local block = 1
+
 
 function gameLoad(selectedSong)
 	love.graphics.setBackgroundColor(0, 0, 0, 255)
@@ -84,6 +86,7 @@ function gameLoad(selectedSong)
 	end
 	debugLog("Done loading!", 1, moduleName)
 	
+	parser.getFilteredTimingPoints()
 end
 
 function gameUpdate(dt)
@@ -135,7 +138,6 @@ function gameUpdate(dt)
 			run = false
 		end
 	end
-	
 	if love.keyboard.isDown("lshift") then
 		run = true
 	else
@@ -143,45 +145,56 @@ function gameUpdate(dt)
 	end
 	
 	--Notelist update
-	for i = 1, #noteListDinamic do
-		noteListDinamic[i].objTime = noteListStatic[i].objTime
-		noteListDinamic[i].objTime = noteListDinamic[i].objTime*(speed*0.5) - currentSongTime*(speed*0.5)
-		
-		--Collision with notes
-		if noteListDinamic[i].objTime + noteDrawOffset <= playerImageBoundaries.Y1 then	
+	--Updates only 170 notes every frame, optimization
+	for i = block, block+170 do
+		if noteListDinamic[i] ~= nil then
+			noteListDinamic[i].objTime = noteListStatic[i].objTime
+			noteListDinamic[i].objTime = noteListDinamic[i].objTime*(speed*0.5) - currentSongTime*(speed*0.5)
 			
-			if ScreenSizeW/2-((noteListDinamic[i].x-256)*screenRatio) > playerImageBoundaries.X1-(playerImageBoundaries.X1*0.013)
-			and ScreenSizeW/2-((noteListDinamic[i].x-256)*screenRatio) < playerImageBoundaries.X2*1.013 then
+			--Collision with notes
+			if noteListDinamic[i].objTime + noteDrawOffset <= playerImageBoundaries.Y1 then	
 				
-				if noteListDinamic[i].hasBeenHit == false then
-					if autoPlay then
-						if noteListDinamic[nextNote+1] ~= nil then
-							nextNote = nextNote + 1
+				if ScreenSizeW/2-((noteListDinamic[i].x-256)*screenRatio) > playerImageBoundaries.X1-(playerImageBoundaries.X1*0.013)
+				and ScreenSizeW/2-((noteListDinamic[i].x-256)*screenRatio) < playerImageBoundaries.X2*1.013 then
+					
+					if noteListDinamic[i].hasBeenHit == false then
+						if autoPlay then
+							if noteListDinamic[nextNote+1] ~= nil then
+								nextNote = nextNote + 1
+							end
 						end
+						block = block + 1
+						if noteListDinamic[i].objType == 1 then
+							scoreAdd = scoreAdd + (300 * combo)
+							comboPosY = ScreenSizeH*0.02
+							combo = combo + 1
+							alphaEffect = 255
+						elseif noteListDinamic[i].objType == 2 then
+							scoreAdd = scoreAdd + 100
+						end
+						fx:stop()
+						fx:setVolume(noteListDinamic[i].vol)
+						fx:play()
+						
+						noteListDinamic[i].hasBeenHit = true
 					end
-					scoreAdd = scoreAdd + (300 * combo)
-					comboPosY = ScreenSizeH*0.02
-					combo = combo + 1
-					fx:stop()
-					fx:setVolume(noteListDinamic[i].vol)
-					fx:play()
-					alphaEffect = 255
-					noteListDinamic[i].hasBeenHit = true
-				end
+					
+				elseif noteListDinamic[i].hasBeenHit == false then
 				
-			elseif noteListDinamic[i].hasBeenHit == false then
-			
-				if noteListDinamic[nextNote+1] ~= nil then
-					nextNote = nextNote + 1
+					if noteListDinamic[nextNote+1] ~= nil then
+						nextNote = nextNote + 1
+					end
+					block = block + 1
+					noteListDinamic[i].hasBeenHit = true
+					if noteListDinamic[i].objType == 1 then
+						if combo > 35 then
+							fxMiss:play()
+						end
+						combo = 1
+					end
 				end
-				noteListDinamic[i].hasBeenHit = true
-				if combo > 35 then
-					fxMiss:play()
-				end
-				combo = 1
 				
 			end
-			
 		end
 	end																			
 	
@@ -209,10 +222,12 @@ function gameDraw()
 	drawBGParallax(PlayerX*0.02, my * mouseSens, false)
 	
 	love.graphics.setColor(255, 255, 255, 255)
-	for i = 1, #noteListDinamic do
-		if noteListDinamic[i].hasBeenHit == false then
-			if tonumber(noteListDinamic[i].objTime) < ScreenSizeH then
-				getCurrentSize(noteListDinamic[i].image, "HitObject", 1.2, (noteListDinamic[i].x-256)*screenRatio, ScreenSizeH/2+noteListDinamic[i].objTime - noteDrawOffset, true)
+	for i = block, block + 170 do
+		if noteListDinamic[i] ~= nil then
+			if noteListDinamic[i].hasBeenHit == false then
+				if tonumber(noteListDinamic[i].objTime) < ScreenSizeH then
+					getCurrentSize(noteListDinamic[i].image, "HitObject", 1.2, (noteListDinamic[i].x-256)*screenRatio, ScreenSizeH/2+noteListDinamic[i].objTime - noteDrawOffset, true)
+				end
 			end
 		end
 	end

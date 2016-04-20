@@ -102,7 +102,7 @@ end
 
 --------------------------------------------------------
 
-function HitObject:init(posX, posY, nTime, vol, image) --Partial Implementation!
+function HitObject:init(posX, posY, nTime, vol, image, objType) --Partial Implementation!
 	self.x = posX
 	self.y = posY
 	self.objTime = nTime
@@ -113,5 +113,6 @@ function HitObject:init(posX, posY, nTime, vol, image) --Partial Implementation!
 	self.boundaries = {}
 	self.hasBeenHit = false
 	self.hasMissed = false
+	self.objType = objType
 end
 ---------------------------------------------------------

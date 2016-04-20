@@ -30,7 +30,7 @@ function objectParser.parseHitCircle(str)
 	local objTime = tonumber(params[3])
 	
 	-- Create the hitCircle based on parameters splitted
-	hitCircle = HitObject(x, y, objTime, 0.5, hitcircleGraphic)
+	hitCircle = HitObject(x, y, objTime, 0.5, hitcircleGraphic, 1)
 	table.insert(hitCircleL, hitCircle)
 	return hitCircleL
 end
@@ -78,37 +78,37 @@ function objectParser.parseSlider(str)
 			if repeatGeneration % 2 ~= 0 then --First section of a slider
 				-- Put slider beginning point in table
 				if repeatGeneration == 1 then
-					table.insert(slider, HitObject(x, y, objTime+(sliderDuration*(repeatGeneration-1)), 0.5, hitcircleGraphic))
+					table.insert(slider, HitObject(x, y, objTime+(sliderDuration*(repeatGeneration-1)), 0.5, hitcircleGraphic, 1))
 				end
 
 				-- Put the connecting notes inside the table
 				local ticks = sliderDuration/(beatLength/4)
 				for i = 0.14, 0.87, 0.1 do
 					bx, by = curve:evaluate(i)
-					table.insert(slider, HitObject(bx, by, objTime+(i*sliderDuration)+(sliderDuration*(repeatGeneration-1)), 0.1, slidertickGraphic))
+					table.insert(slider, HitObject(bx, by, objTime+(i*sliderDuration)+(sliderDuration*(repeatGeneration-1)), 0.1, slidertickGraphic, 2))
 				end
 			
 				-- Put slider ending edge on the slider
 				bx, by = curve:evaluate(1)
-				table.insert(slider, HitObject(bx, by, objTime+(sliderDuration*repeatGeneration), 0.5, hitcircleGraphic))
+				table.insert(slider, HitObject(bx, by, objTime+(sliderDuration*repeatGeneration), 0.5, hitcircleGraphic, 1))
 			
 			else --Second section of a slider
 				
 				-- Put slider beginning point in table
 				bx, by = curve:evaluate(1)
-				table.insert(slider, HitObject(bx, by, objTime+(sliderDuration*(repeatGeneration-1)), 0.5, hitcircleGraphic))
+				table.insert(slider, HitObject(bx, by, objTime+(sliderDuration*(repeatGeneration-1)), 0.5, hitcircleGraphic, 1))
 				
 				-- Put the connecting notes reversed in the table
 				local ticks = sliderDuration/(beatLength/4)
 				
 				for i = 0.87, 0.14, -0.1 do
 					bx, by = curve:evaluate(i)
-					table.insert(slider, HitObject(bx, by, (objTime+(math.abs(1-i)*sliderDuration))+(sliderDuration*(repeatGeneration-1)), 0.1, slidertickGraphic))
+					table.insert(slider, HitObject(bx, by, (objTime+(math.abs(1-i)*sliderDuration))+(sliderDuration*(repeatGeneration-1)), 0.1, slidertickGraphic, 2))
 				end
 			
 				-- Put slider ending edge on the slider
 				bx, by = curve:evaluate(0)
-				table.insert(slider, HitObject(bx, by, (objTime+sliderDuration*(repeatGeneration)), 0.5, hitcircleGraphic))
+				table.insert(slider, HitObject(bx, by, (objTime+sliderDuration*(repeatGeneration)), 0.5, hitcircleGraphic, 1))
 			end
 			repeatGeneration = repeatGeneration + 1
 		end
@@ -146,7 +146,6 @@ function objectParser.getSliderVelocity(objTime)
 	
 	local index = 1
 	if objTime < fileTimingPointsInherited[1].offset then
-		print("slider velocity will be 1")
 		sliderVelocity = 1
 	else
 		while (objTime >= fileTimingPointsInherited[index].offset) and (index < #fileTimingPointsInherited) do
