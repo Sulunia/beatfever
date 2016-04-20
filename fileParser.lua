@@ -7,8 +7,6 @@ parser = {}
 local fileLoaded = nil
 local ObjectTypes = {HitCircle = 1, Slider = 2, NewCombo = 4, Spinner = 8}
 
-local timingPointList = {}
-local timingPointIndex = 1
 
 
 function parser.loadOsuFile(file)
@@ -84,6 +82,23 @@ function parser.getTimingPoints()
 	
 	debugLog("Parsed timing points for osu file!", 1, moduleName)
 	return timingpoint
+end
+
+function parser.getFilteredTimingPoints()
+	local timingPoints = parser.getTimingPoints()
+	local timingPointsInherited = {}
+	local timingPointsBPM = {}
+	
+	--Inherited == 0 means the timing point IS inherited.
+	for i, value in ipairs(timingPoints) do
+		if tonumber(value.inherited) == 0 then
+			table.insert(timingPointsInherited, value)
+		else
+			table.insert(timingPointsBPM, value)
+		end
+	end
+	
+	return timingPointsBPM, timingPointsInherited
 end
 
 function parser.getSongTitle()

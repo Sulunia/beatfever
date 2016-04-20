@@ -5,7 +5,8 @@ objectParser = {}
 
 hitcircleGraphic = nil
 slidertickGraphic = nil
-local fileTimingPoints = nil
+local fileTimingPointsInherited = {}
+local fileTimingPointsBPM = {}
 
 
 function objectParser.setNoteGraphics(c, s)
@@ -20,6 +21,7 @@ end
 	
 function objectParser.parseHitCircle(str)
 	assert(hitcircleGraphic, "No image loaded!")
+	
 	local hitCircleL = {}
 	-- Copies common object parameters to vars
 	local params = string.split(str, ",")
@@ -71,9 +73,6 @@ function objectParser.parseSlider(str)
 		local sliderDuration = sliderSingleSectionDuration * beatLength
 		local sliderEndTime = objTime + sliderDuration
 		local repeatGeneration = 1
-		
-		-- Override
-		--sliderRepeatCount = 1
 		
 		while sliderRepeatCount >= repeatGeneration do
 			if repeatGeneration % 2 ~= 0 then --First section of a slider
@@ -140,51 +139,29 @@ function objectParser.generateTableForBezier(x, y, parameters)
 end
 
 function objectParser.getSliderVelocity(objTime)
-	print("-------------Start")
-	if fileTimingPoints == nil then
-		fileTimingPoints = parser.getTimingPoints()
+	if fileTimingPointsInherited[1] == nil then
+		fileTimingPointsBPM, fileTimingPointsInherited = parser.getFilteredTimingPoints()
 	end
+	
 	
 	local index = 1
-	
-	while objTime > fileTimingPoints[index+1].offset and fileTimingPoints[index+2] ~= nil do
-		-- Finds which timing point will be active for the current slider
-		index = index + 1
-	end
-	
-	
-	print("Object time is "..objTime)
-	print("Index of timing point is "..index..", with offset "..fileTimingPoints[index].offset.." and beat length of "..fileTimingPoints[index].mpb)
-	
-	if index == 1 then
+	if objTime < fileTimingPointsInherited[1].offset then
+		print("slider velocity will be 1")
 		sliderVelocity = 1
-	elseif fileTimingPoints[index].inherited == 1 then
-		-- Some beatmaps set BPM and velocity at the same offset time.
-		if fileTimingPoints[index + 1].offset == fileTimingPoints[index].offset then
-			-- If such thing happens, we get the velocity set imediately after the BPM setup
-			index = index + 1
-			print("Next timing point defines velocity")
-			sliderVelocity = math.abs(100 / fileTimingPoints[index].mpb)
-		else
-			-- Otherwise we get the last velocity imposed
-			if fileTimingPoints[index-1].inherited == 0 then
-				index = index - 1
-				sliderVelocity = math.abs(100 / fileTimingPoints[index].mpb)
-				print("Picked last velocity")
+	else
+		while (objTime >= fileTimingPointsInherited[index].offset) and (index < #fileTimingPointsInherited) do
+			-- Finds which timing point will be active for the current slider
+			if fileTimingPointsInherited[index+1] == nil then
+				break 
+			elseif objTime < fileTimingPointsInherited[index+1].offset then
+				break
 			else
-				-- Not sure if this will ever happen, so i'm warning and kickin back velocity to 1
-				sliderVelocity = 1
-				debugLog("Slider velocity failed to detect closest inherited setup, assuming 1", 3, moduleName)
+				index = index + 1
 			end
 		end
-		
-	else
-		-- Calculate slider velocity
-		sliderVelocity = math.abs(100 / fileTimingPoints[index].mpb)
+		sliderVelocity = math.abs(100 / fileTimingPointsInherited[index].mpb)
 	end
-	
-	print("-------------End")
-	assert(sliderVelocity, "Slider velocity was not parsed!")
+	--print("ObjTime is "..objTime.." and sliderVelocity is "..sliderVelocity.." calculated at offset "..fileTimingPointsInherited[index].offset.."["..index.."]")
 	return sliderVelocity
 end
 
@@ -194,20 +171,23 @@ function objectParser.getSliderBeatLength(objTime)
 	
 	local index = 1
 	
-	if index == 1 then
-		detectedMPB = fileTimingPoints[1].mpb
+	if objTime == fileTimingPointsBPM[1].offset then
+		index = 1
 	else
-		while objTime > fileTimingPoints[index].offset do
+		while (objTime >= fileTimingPointsBPM[index].offset) and (index < #fileTimingPointsBPM) do
 			-- Finds which timing point will be active for the current slider
-			if fileTimingPoints[index].mpb > 0 then
-				detectedMPB = fileTimingPoints[index].mpb
+			if fileTimingPointsBPM[index+1] == nil then
+				break 
+			elseif objTime < fileTimingPointsBPM[index+1].offset then
+				break
+			else
+				index = index + 1
 			end
-			index = index + 1
 		end
 	end
-	
 	-- print("Object time is "..objTime)
-	-- print("Index of timing point is "..index..", with offset "..fileTimingPoints[index].offset.." and beat length of "..fileTimingPoints[index].mpb)
+	detectedMPB = fileTimingPointsBPM[index].mpb
+	--print("Beat length of "..fileTimingPointsBPM[index].mpb)
 	assert(detectedMPB, "Unable to parse beat length!")
 	return detectedMPB
 end
