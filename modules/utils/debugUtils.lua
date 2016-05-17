@@ -25,20 +25,22 @@ end
 
 function debugDrawObjectBoundaries(boundaries)
 	if debuggingEnabled then
-		love.graphics.setFont(debugFont)
-		love.graphics.setColor(255, 255, 0, 255)
-		love.graphics.print(boundaries.identifier, boundaries.X1, boundaries.Y1-15)
-		love.graphics.rectangle("fill", boundaries.X1, boundaries.Y1, 10, 10)
-		love.graphics.rectangle("fill", boundaries.X2-10, boundaries.Y1, 10, 10)
-		love.graphics.rectangle("fill", boundaries.X1, boundaries.Y2-10, 10, 10)
-		love.graphics.rectangle("fill", boundaries.X2-10, boundaries.Y2-10, 10, 10)
-		love.graphics.line(boundaries.X1,boundaries.Y1, boundaries.X1, boundaries.Y2)
-		love.graphics.line(boundaries.X2, boundaries.Y2, boundaries.X1, boundaries.Y2)
-		love.graphics.line(boundaries.X2, boundaries.Y2, boundaries.X2, boundaries.Y1)
-		love.graphics.line(boundaries.X1, boundaries.Y1, boundaries.X2, boundaries.Y1)
-		--love.graphics.rectangle("line", boundaries.X2, boundaries.Y2, 10, 10)
-		love.graphics.setFont(font)
-		love.graphics.setColor(255, 255, 255, 255)
+		if boundaries.identifier ~= "HO" then
+			love.graphics.setFont(debugFont)
+			love.graphics.setColor(255, 255, 0, 255)
+			love.graphics.print(boundaries.identifier, boundaries.X1, boundaries.Y1-15)
+			love.graphics.rectangle("fill", boundaries.X1, boundaries.Y1, 10, 10)
+			love.graphics.rectangle("fill", boundaries.X2-10, boundaries.Y1, 10, 10)
+			love.graphics.rectangle("fill", boundaries.X1, boundaries.Y2-10, 10, 10)
+			love.graphics.rectangle("fill", boundaries.X2-10, boundaries.Y2-10, 10, 10)
+			love.graphics.line(boundaries.X1,boundaries.Y1, boundaries.X1, boundaries.Y2)
+			love.graphics.line(boundaries.X2, boundaries.Y2, boundaries.X1, boundaries.Y2)
+			love.graphics.line(boundaries.X2, boundaries.Y2, boundaries.X2, boundaries.Y1)
+			love.graphics.line(boundaries.X1, boundaries.Y1, boundaries.X2, boundaries.Y1)
+			--love.graphics.rectangle("line", boundaries.X2, boundaries.Y2, 10, 10)
+			love.graphics.setFont(font)
+			love.graphics.setColor(255, 255, 255, 255)
+		end
 	end
  end
  

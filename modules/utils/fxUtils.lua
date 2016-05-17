@@ -32,7 +32,7 @@ debugLog("Done", 1, moduleName)
 return trailListX, trailListY
 end
 
-function updateMainMenuTrails()
+function updateMainMenuTrails(dt)
 	for t = 1, #trailListX do
 			trailListX[t][1] = trailListX[t][1] + trailListX[t][4]
 
@@ -40,11 +40,11 @@ function updateMainMenuTrails()
 				if trailListX[t][4] > 0 then
 					trailListX[t][1] = 0 - math.random(300)
 					trailListX[t][2] = math.random(ScreenSizeH)
-					trailListX[t][4] = math.random(5, 13)
+					trailListX[t][4] = math.random(5*dt*100, 13*dt*100)
 				else
 					trailListX[t][1] = ScreenSizeW + math.random(300)
 					trailListX[t][2] = math.random(ScreenSizeH)
-					trailListX[t][4] = -1 * math.random(5, 13)
+					trailListX[t][4] = -1 * math.random(5*dt*100, 13*dt*100)
 				end
 			end
 		end
@@ -56,11 +56,11 @@ function updateMainMenuTrails()
 				if trailListY[t][4] > 0 then
 					trailListY[t][1] = math.random(ScreenSizeW)
 					trailListY[t][2] = 0 - math.random(ScreenSizeH)
-					trailListY[t][4] = math.random(5, 13)
+					trailListY[t][4] = math.random(5*dt*100, 13*dt*100)
 				else
 					trailListY[t][1] = math.random(ScreenSizeW)
 					trailListY[t][2] = ScreenSizeH + math.random(ScreenSizeH)
-					trailListY[t][4] = -1 * math.random(5, 13)
+					trailListY[t][4] = -1 * math.random(5*dt*100, 13*dt*100)
 				end
 			end
 		end

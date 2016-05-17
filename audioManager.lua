@@ -122,6 +122,7 @@ function playInterpolated(dt) --Runs the music, but enables interpolated timer r
 	songTime = 0
 	songPlay:play()
 	songPlay:setVolume(0.86)
+	songPlay:setPitch(1)
 	debugLog("Started interpolated timer playback.", 1, moduleName)
 end
 

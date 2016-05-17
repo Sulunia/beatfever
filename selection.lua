@@ -21,6 +21,7 @@ local backButtonSize = {}
 local backButtonBoundaries = {}
 local backMult = 1
 local backX = 0
+local selectionDt = 0.16
 
 function selectionLoad()
 	
@@ -55,6 +56,7 @@ end
 
 function selectionUpdate(dt)
 	--Automagically reloads song selection screen when a song is installed
+	selectionDt = dt
 	if reloadSelectionScreen then
 		selectionDispose()
 		selectionLoad()
@@ -69,10 +71,10 @@ function selectionUpdate(dt)
 	end
 	
 	--Variable updates
-	mouseWheel = lerp(mouseWheel, yMouse, 0.18)
+	mouseWheel = lerp(mouseWheel, yMouse, 0.18*dt*100)
 	mx, my = love.mouse.getPosition()	
-	updateMainMenuTrails()	
-	xButtonModifier = lerp(xButtonModifier, 22, 0.06)
+	updateMainMenuTrails(dt)	
+	xButtonModifier = lerp(xButtonModifier, 22, 0.06*dt*100)
 	
 	--Updates selection menu button states
 	for i = 1, #songsInstalled do								
@@ -98,23 +100,24 @@ function selectionUpdate(dt)
 	end
 	
 	if isHovered(backButtonBoundaries) then
-		backMult = lerp(backMult, 1.1, 0.08)
-		backX = lerp(backX, 30, 0.2)
+		backMult = lerp(backMult, 1.1, 0.08*dt*100)
+		backX = lerp(backX, 30, 0.2*dt*100)
 		if (oldMouseClicked == false and newMouseClicked == true) then
+			musicRewind()
 			splashLoad()
 			loadSongData()
 			selectionDispose()
 			Screen = 0
 		end
 	else
-		backMult = lerp(backMult, 1, 0.08)
-		backX = lerp(backX, 0, 0.2)
+		backMult = lerp(backMult, 1, 0.08*dt*100)
+		backX = lerp(backX, 0, 0.2*dt*100)
 	end
 	
 	--Smooth volume increase when song is selected
 	if songVol < 0.74 and (not gameTransition) then	
 		musicVolume(songVol)
-		songVol = lerp(songVol, 0.82, 0.005)
+		songVol = lerp(songVol, 0.82, 0.005*dt*100)
 	end
 	
 	--Input
@@ -129,9 +132,9 @@ function selectionUpdate(dt)
 	
 	--User chose a song to play, so...
 	if gameTransition then
-		screenAlpha = lerp(screenAlpha, 58, 0.019)
-		fadePos = lerp(fadePos, ScreenSizeW/2, 0.04)
-		buttonAlpha = lerp(buttonAlpha, 0, 0.02)
+		screenAlpha = lerp(screenAlpha, 58, 0.019*dt*100)
+		fadePos = lerp(fadePos, ScreenSizeW/2, 0.04*dt*100)
+		buttonAlpha = lerp(buttonAlpha, 0, 0.02*dt*100)
 		if screenAlpha < 62 then
 			gameLoad(listButtons[lastClickedOption])
 			selectionDispose()
@@ -157,9 +160,9 @@ function selectionDraw()
 	for i = 1, #songsInstalled do
 		love.graphics.setColor(255, 255, 255, screenAlpha)
 		if listButtons[i].clicked == false then
-			listButtons[i]:draw(ScreenSizeW/4+fadePos,(ScreenSizeH/2-(i*(ScreenSizeH*0.18)+mouseWheel)), buttonAlpha)
+			listButtons[i]:draw(ScreenSizeW/4+fadePos,(ScreenSizeH/2-(i*(ScreenSizeH*0.18)+mouseWheel)), buttonAlpha, selectionDt)
 		else
-			listButtons[i]:draw(ScreenSizeW/4+fadePos-xButtonModifier,(ScreenSizeH/2-(i*(ScreenSizeH*0.18)+mouseWheel)), buttonAlpha)
+			listButtons[i]:draw(ScreenSizeW/4+fadePos-xButtonModifier,(ScreenSizeH/2-(i*(ScreenSizeH*0.18)+mouseWheel)), buttonAlpha, selectionDt)
 		end
 	end
 	--Draw top and bottom fade effects

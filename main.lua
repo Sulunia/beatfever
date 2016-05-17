@@ -10,7 +10,7 @@ require("fileParser")
 require("modules/objectParsing")
 class = require("modules/externals/30log") -- Object Orientation library, needed for some stuff
 require("modules/gameObjects") 		 -- Now we create the objects we need in order to get stuff working
---require("modules/externals/lovedebug") --Unexpected crashes often get handled by this, also provides a nice console
+require("modules/externals/lovedebug") --Unexpected crashes often get handled by this, also provides a nice console
 require("game")
 require("modules/externals/extractor")
 bit = require("bit")
@@ -88,15 +88,15 @@ function love.update(dt)
 	
 	--FPS at 120 on menus, 200 ingame
 	if Screen == 2 then
-		min_dt = 1/200
+		min_dt = 1/60
 	else
-		min_dt = 1/120
+		min_dt = 1/60
 	end
 	
 	next_time = next_time + min_dt
 	
 	-- Update screen sizes only on some frames
-	if Count % 5 == 0 then
+	if Count % 32 == 0 then
 		ScreenSizeW = love.graphics.getWidth() -- gets screen dimensions.
 		ScreenSizeH = love.graphics.getHeight() -- gets screen dimensions.
 	end

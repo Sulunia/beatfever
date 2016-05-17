@@ -26,6 +26,7 @@ local angle = 0
 -- Logo scale values
 local sizeMultLogo = 1
 local sizeNoiseLogo = 1
+local splashDT = 0.17
 
 -- Logo click event handlers
 local logoClicked = false
@@ -146,6 +147,7 @@ end
 function splashUpdate(dt)
 	-- Delta time
 	local Etime = love.timer.getTime()
+	splashDT = dt
 	-- Returns the current sample being played by the audio manager.
 	local MusicPos = musicRetrieveCurSample() 
 	-- Obtain the size of the song in samples, so you can keep track of when it's gonna end.
@@ -182,7 +184,7 @@ function splashUpdate(dt)
 	mx = mx - ScreenSizeW / 2
 	my = my - ScreenSizeH / 2
 	
-	updateMainMenuTrails(trailsx, trailsy)
+	updateMainMenuTrails(dt)
 		
 	-- update das trails
 	if Etime-Stime > 0.05 then
@@ -224,34 +226,34 @@ function splashUpdate(dt)
 		openTimeEnd = love.timer.getTime()
 		if (openTimeEnd - openTimeStart > 0.2) then
 			openTimeEnd = love.timer.getTime()
-			clickedUp = lerp(clickedUp, ScreenSizeH/4, 0.03)
-			alphaClick = lerp(alphaClick, 0, 0.09)
-			clickedSize = lerp(clickedSize, 0.8, 0.04)
-			buttonYHidden = lerp(buttonYHidden, 0, 0.05)
+			clickedUp = lerp(clickedUp, ScreenSizeH/4, 0.03*dt*100)
+			alphaClick = lerp(alphaClick, 0, 0.09*dt*100)
+			clickedSize = lerp(clickedSize, 0.8, 0.04*dt*100)
+			buttonYHidden = lerp(buttonYHidden, 0, 0.05*dt*100)
 		end
 	else
-		clickedUp = lerp(clickedUp, 0, 0.01)
-		alphaClick = lerp(alphaClick, 255, 0.09)
-		clickedSize = lerp(clickedSize, 1, 0.02)
-		buttonYHidden = lerp(buttonYHidden, love.graphics.getHeight(), 0.05)
+		clickedUp = lerp(clickedUp, 0, 0.01*dt*100)
+		alphaClick = lerp(alphaClick, 255, 0.09*dt*100)
+		clickedSize = lerp(clickedSize, 1, 0.02*dt*100)
+		buttonYHidden = lerp(buttonYHidden, love.graphics.getHeight(), 0.05*dt*100)
 	end
 	
 	-- Play button
 	if(isHovered(button1Boundaries)) then
-		button1SizeHover = lerp(button1SizeHover, 1.2, 0.14)
+		button1SizeHover = lerp(button1SizeHover, 1.2, 0.14*dt*100)
 		if(oldMouseClicked == false and newMouseClicked == true and menuOpened == true) then 
 			screenTransitioning = true 
 			debugLog("Screen transitioning", 1, moduleName)
 		end		
 	else
-		button1SizeHover = lerp(button1SizeHover, 1, 0.04)
+		button1SizeHover = lerp(button1SizeHover, 1, 0.04*dt*100)
 	end
 	
 	-- Options button
 	if(isHovered(button2Boundaries)) then
-		button2SizeHover = lerp(button2SizeHover, 1.2, 0.14)
+		button2SizeHover = lerp(button2SizeHover, 1.2, 0.14*dt*100)
 	else
-		button2SizeHover = lerp(button2SizeHover, 1, 0.04)
+		button2SizeHover = lerp(button2SizeHover, 1, 0.04*dt*100)
 	end
 	
 	if (Count % intervalLogoClick == 0 and not canClickMenu) then
@@ -260,7 +262,7 @@ function splashUpdate(dt)
 	
 	-- Fade Out/In
 	if screenTransitioning then
-		menuAlpha = lerp(menuAlpha, 0, 0.05)
+		menuAlpha = lerp(menuAlpha, 0, 0.05*dt*100)
 	end
 	
 	-- Change screen
@@ -270,8 +272,8 @@ function splashUpdate(dt)
 		selectionLoad()
 		Screen = 1
 	else
-		particleStar:update(dt)
-		particleStarDireita:update(dt)
+		particleStar:update(dt*1.3)
+		particleStarDireita:update(dt*1.3)
 	end
 	
 end
@@ -285,7 +287,7 @@ function splashDraw()
 	barSize = (ScreenSizeW / numBars) * 3
 	
 	-- Updates logo size
-	sizeNoiseLogo = lerp(sizeNoiseLogo, clamp(1 - (mediaFFT/(numBars*90)), 1, 0.95), 0.18)
+	sizeNoiseLogo = lerp(sizeNoiseLogo, clamp(1 - (mediaFFT/(numBars*90)), 1, 0.95), 0.18*splashDT*100)
 
 	-- Draw bars
 	love.graphics.push()
@@ -321,13 +323,13 @@ function splashDraw()
 	-- Draw logo
 	love.graphics.push()
 		love.graphics.translate(ScreenSizeW / 2, ScreenSizeH / 2)
-		love.graphics.rotate(math.sin(angle) * 0.06)
+		love.graphics.rotate(math.sin(angle) * 0.12)
 		love.graphics.translate(-mx * mouseSens + - ScreenSizeW / 2, -my * mouseSens + - ScreenSizeH / 2)
 		
 		if (isHovered(logoBoundaries)) then
-			sizeMultLogo = lerp(sizeMultLogo, 1.3, 0.1)
+			sizeMultLogo = lerp(sizeMultLogo, 1.3, 0.1*splashDT*100)
 		else
-			sizeMultLogo = lerp(sizeMultLogo, 1, 0.06)
+			sizeMultLogo = lerp(sizeMultLogo, 1, 0.06*splashDT*100)
 		end		
 		
 		-- Reset color

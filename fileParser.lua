@@ -12,7 +12,7 @@ local ObjectTypes = {HitCircle = 1, Slider = 2, NewCombo = 4, Spinner = 8}
 function parser.loadOsuFile(file)
 	fileLoaded = file
 	fileLines = {}
-	debugLog("Processando arquivo '" .. file .. "'...", 1, moduleName)
+	--debugLog("Processando arquivo '" .. file .. "'...", 1, moduleName)
 	if love.filesystem.isFile(file) then 
 		for line in love.filesystem.lines(file) do
 			table.insert(fileLines, line)		--Needs to check if the file really exists or not, otherwise, wild crashes may occur.
@@ -20,7 +20,7 @@ function parser.loadOsuFile(file)
 		--debugLog("Arquivo " .. file .. " carregado", 1, moduleName)
 		return true
 	else
-		debugLog("Falha ao carregar arquivo, saindo", 2, moduleName)
+		--debugLog("Falha ao carregar arquivo, saindo", 2, moduleName)
 		return false
 	end
 end
@@ -80,7 +80,7 @@ function parser.getTimingPoints()
 		table.insert(timingpoint, newpoint)
 	end
 	
-	debugLog("Parsed timing points for osu file!", 1, moduleName)
+	--debugLog("Parsed timing points for osu file!", 1, moduleName)
 	return timingpoint
 end
 
@@ -97,7 +97,8 @@ function parser.getFilteredTimingPoints()
 			table.insert(timingPointsBPM, value)
 		end
 	end
-	
+	--for j, v in ipairs(timingPointsInherited) do print(v.offset, v.mpb) end
+	--print("------")
 	return timingPointsBPM, timingPointsInherited
 end
 
@@ -128,6 +129,7 @@ end
 function parser.getArtist()
 	for key, line in ipairs(fileLines) do
 		if #line>0 then
+		
 			if string.find(line, "Artist:") ~= nil then
 				artist = string.split(line, ':')
 			end
@@ -149,6 +151,35 @@ function parser.getBMCreator()
 	return creator[2]
 end
 
+function parser.getComboColors()
+	local colorstring = {}
+	local colors = {}
+	local save = false
+	
+	for key1, line in ipairs(fileLines) do
+		if #line > 2 then
+			if save then
+				table.insert(colorstring, line) --inserts a value in a given table
+			end
+		else
+			save = false
+		end
+		
+		if string.find(line, '%[Colours%]') ~= nil then
+			save = true
+		end
+	end -- closes "for" loop
+	
+	for key2, color in ipairs(colorstring) do
+		parameters = string.split(color, " : ")
+		comboColour = string.split(parameters[2], ",")
+		newComboColour = {comboColour[1], comboColour[2], comboColour[3]}
+		--R, G, B
+		table.insert(colors, newComboColour)
+	end
+	return colors
+end
+
 function parser.getSliderMultiplier()
 	for key, line in ipairs(fileLines) do
 		if #line>0 then
@@ -157,7 +188,7 @@ function parser.getSliderMultiplier()
 			end
 		end
 	end
-	debugLog("Slider multiplier: "..multiplier[2], 1, moduleName)
+	--debugLog("Slider multiplier: "..multiplier[2], 1, moduleName)
 	return multiplier[2]
 end
 
@@ -279,34 +310,38 @@ function parser.parseHitObject(str)
 	local HitCircle = false
 	local Spinner = false
 	local Slider = false
-	local NewCombo = false
+	local newCombo = false
 	
 	--Get note type from string
 	local params = string.split(str, ",")
 	local objType = tonumber(params[4]) 
 	
+	--Checks new combo
+	if (bit.band(objType, 4) > 0) then
+		newCombo = true
+	else
+		newCombo = false
+	end
+	
 	--Determines note type based on splitted value
 	if (bit.band(objType, 1) > 0) then
 		--Hit circle
-		note = objectParser.parseHitCircle(str)
+		note = objectParser.parseHitCircle(str, newCombo)
 	end
 	
 	if (bit.band(objType, 2) > 0) then
 		--Slider
-		note = objectParser.parseSlider(str)
+		note = objectParser.parseSlider(str, newCombo)
 	end
 	
-	if (bit.band(objType, 4) > 0) then
-		--NewCombo = true
-	end
 	
 	if (bit.band(objType, 8) > 0) then 
 		--Spinner
-		note = objectParser.parseHitCircle(str)
+		note = objectParser.parseHitCircle(str, newCombo)
 	end
 	--At this point, we just effin hope we have no sliding spinners or something
 
 	--Return to the user the object processed (table)
-	--assert(note, "Returned note is nil!")
+	assert(note, "Returned note is nil!")
 	return note
 end

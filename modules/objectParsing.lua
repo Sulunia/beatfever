@@ -7,7 +7,11 @@ hitcircleGraphic = nil
 slidertickGraphic = nil
 local fileTimingPointsInherited = {}
 local fileTimingPointsBPM = {}
-
+local fileTimingPoints = {}
+local timingPointIndex = 1
+local comboColours = {}
+local currentComboSize = 0
+local currentCombo = 1
 
 function objectParser.setNoteGraphics(c, s)
 	-- Receives love textures to be used in notes.
@@ -15,11 +19,14 @@ function objectParser.setNoteGraphics(c, s)
 	assert(s, "Slidertick image is nil!")
 	hitcircleGraphic = c
 	slidertickGraphic = s
+	comboColours = parser.getComboColors()
+	currentComboSize = #comboColours
+	currentCombo = 1
 	-- Reset timing points in parser for sliders
 	fileTimingPoints = nil
 end
 	
-function objectParser.parseHitCircle(str)
+function objectParser.parseHitCircle(str, combo)
 	assert(hitcircleGraphic, "No image loaded!")
 	
 	local hitCircleL = {}
@@ -28,17 +35,26 @@ function objectParser.parseHitCircle(str)
 	local x = tonumber(params[1])
 	local y = tonumber(params[2])
 	local objTime = tonumber(params[3])
+	local newCombo = combo
+	if newCombo == true then
+		if currentCombo == currentComboSize then
+			currentCombo = 1
+		else
+			currentCombo = currentCombo + 1
+		end
+	end
 	
 	-- Create the hitCircle based on parameters splitted
-	hitCircle = HitObject(x, y, objTime, 0.5, hitcircleGraphic, 1)
+	hitCircle = HitObject(x, y, objTime, 0.5, hitcircleGraphic, 1, comboColours[currentCombo])
 	table.insert(hitCircleL, hitCircle)
 	return hitCircleL
 end
 
-function objectParser.parseSlider(str)
+function objectParser.parseSlider(str, combo)
 	-- Checks if textures have been loaded
 	assert(hitcircleGraphic, "No image loaded!")
 	assert(slidertickGraphic, "No image loaded!(slider)")
+	assert(comboColours[currentCombo])
 	
 	local slider = {}
 	-- Copies common object parameters to vars
@@ -46,6 +62,7 @@ function objectParser.parseSlider(str)
 	local x = tonumber(params[1])
 	local y = tonumber(params[2])
 	local objTime = tonumber(params[3])
+	local newCombo = combo
 	
 	-- Gets the other curve parameters
 	local curveParams = string.split(params[6], "|") 
@@ -69,46 +86,54 @@ function objectParser.parseSlider(str)
 		local pxPerBeat = sliderMultiplier * 100 * sliderVelocity
 		local sliderLengthBeats = pixelLength * sliderRepeatCount / pxPerBeat
 		local sliderSingleSectionDuration = pixelLength / pxPerBeat
-		--local sliderDuration = sliderLengthBeats * beatLength
+		local sliderDurationWhole = sliderLengthBeats * beatLength
 		local sliderDuration = sliderSingleSectionDuration * beatLength
 		local sliderEndTime = objTime + sliderDuration
+		--print("Obj time "..objTime.." duration is "..sliderDurationWhole)
 		local repeatGeneration = 1
+		
+		local ticks = math.ceil(sliderDuration/(beatLength/4))
+		--print(ticks)
+		
+		if newCombo == true then
+			if currentCombo == currentComboSize then
+				currentCombo = 1
+			else
+				currentCombo = currentCombo + 1
+			end
+		end
 		
 		while sliderRepeatCount >= repeatGeneration do
 			if repeatGeneration % 2 ~= 0 then --First section of a slider
 				-- Put slider beginning point in table
 				if repeatGeneration == 1 then
-					table.insert(slider, HitObject(x, y, objTime+(sliderDuration*(repeatGeneration-1)), 0.5, hitcircleGraphic, 1))
+					table.insert(slider, HitObject(x, y, objTime+(sliderDuration*(repeatGeneration-1)), 0.5, hitcircleGraphic, 1, comboColours[currentCombo]))
 				end
 
 				-- Put the connecting notes inside the table
 				local ticks = sliderDuration/(beatLength/4)
-				for i = 0.14, 0.87, 0.1 do
+				for i = 0.14, 0.87, 0.2 do
 					bx, by = curve:evaluate(i)
-					table.insert(slider, HitObject(bx, by, objTime+(i*sliderDuration)+(sliderDuration*(repeatGeneration-1)), 0.1, slidertickGraphic, 2))
+					table.insert(slider, HitObject(bx, by, objTime+(i*sliderDuration)+(sliderDuration*(repeatGeneration-1)), 0.1, slidertickGraphic, 2, comboColours[currentCombo]))
 				end
 			
 				-- Put slider ending edge on the slider
 				bx, by = curve:evaluate(1)
-				table.insert(slider, HitObject(bx, by, objTime+(sliderDuration*repeatGeneration), 0.5, hitcircleGraphic, 1))
+				table.insert(slider, HitObject(bx, by, objTime+(sliderDuration*repeatGeneration), 0.5, hitcircleGraphic, 1, comboColours[currentCombo]))
 			
 			else --Second section of a slider
-				
-				-- Put slider beginning point in table
-				bx, by = curve:evaluate(1)
-				table.insert(slider, HitObject(bx, by, objTime+(sliderDuration*(repeatGeneration-1)), 0.5, hitcircleGraphic, 1))
 				
 				-- Put the connecting notes reversed in the table
 				local ticks = sliderDuration/(beatLength/4)
 				
-				for i = 0.87, 0.14, -0.1 do
+				for i = 0.87, 0.14, -0.2 do
 					bx, by = curve:evaluate(i)
-					table.insert(slider, HitObject(bx, by, (objTime+(math.abs(1-i)*sliderDuration))+(sliderDuration*(repeatGeneration-1)), 0.1, slidertickGraphic, 2))
+					table.insert(slider, HitObject(bx, by, (objTime+(math.abs(1-i)*sliderDuration))+(sliderDuration*(repeatGeneration-1)), 0.1, slidertickGraphic, 2, comboColours[currentCombo]))
 				end
 			
 				-- Put slider ending edge on the slider
 				bx, by = curve:evaluate(0)
-				table.insert(slider, HitObject(bx, by, (objTime+sliderDuration*(repeatGeneration)), 0.5, hitcircleGraphic, 1))
+				table.insert(slider, HitObject(bx, by, (objTime+sliderDuration*(repeatGeneration)), 0.5, hitcircleGraphic, 1, comboColours[currentCombo]))
 			end
 			repeatGeneration = repeatGeneration + 1
 		end
@@ -141,6 +166,7 @@ end
 function objectParser.getSliderVelocity(objTime)
 	if fileTimingPointsInherited[1] == nil then
 		fileTimingPointsBPM, fileTimingPointsInherited = parser.getFilteredTimingPoints()
+		fileTimingPoints = parser.getTimingPoints()
 	end
 	
 	

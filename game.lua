@@ -2,8 +2,9 @@ local moduleName = "[Ingame]"
 
 local mouseSens = 0.01
 local PlayerX = 0
+local debugCounter = 0
 local alphaEffect = 1
-local playerPaddleSize = 0.7
+local playerPaddleSize = 0.86
 local noteList = {}
 local currentSongTime = 0
 local songSkippedIntro = false
@@ -12,6 +13,7 @@ local screenRatio = 1
 local ingameBoundaryX1 = 0
 local ingameBoundaryX2 = 0
 local ingameCalculatedScreenResX = 512*1
+local gameDt = 0
 
 autoPlay = false
 local nextNote = 1
@@ -19,13 +21,21 @@ local songTimeOld = 0
 local noteDrawOffset = 0
 local combo = 1
 local run = false
+local kiaiEnabled = 0
+local kiaiAlpha = 0
 local score = 0
 local scoreAdd = 0
 local scorePosY = 0
 local comboPosY = 0
+local newsSpeed = 0.4
 
+local precision = 0
+local noteHits = 1
+local noteMisses = 1
 local block = 1
+local redAlert = 255
 
+var = 1
 
 function gameLoad(selectedSong)
 	love.graphics.setBackgroundColor(0, 0, 0, 255)
@@ -36,13 +46,15 @@ function gameLoad(selectedSong)
 	playerImageFX = love.graphics.newImage("img/garsom_hitech.png")
 	playerImageNormal = love.graphics.newImage("img/garsom_semswag.png")
 	
-	pelletHitCircle = love.graphics.newImage("img/fruit_3.png")
+	pelletHitCircle = love.graphics.newImage("img/hexa.png")
 	pelletSlidertick = love.graphics.newImage("img/fruteenha.png")
 	
 	fx = love.audio.newSource("uisounds/normal-hitclap.wav", "static")
 	fx:setVolume(0.5)
 	fxMiss = love.audio.newSource("uisounds/miss.ogg", "static")
 	fxMiss:setVolume(1.0)
+	
+	kiaiGlow = love.graphics.newImage("img/grad.png")
 	--End of graphics loading	
 	
 	--Parse stuff and load music
@@ -57,14 +69,14 @@ function gameLoad(selectedSong)
 	--Begin BPM calculation
 	timingPoints = parser.getTimingPoints()
 	curTimingPoint = 1
-	initialTime = timingPoints[1].offset
+	initialTime = {Time = timingPoints[1].offset, kiai = 0}
 	BPMList = {}
 	curMPB = timingPoints[1].mpb
 	
-	while (initialTime < tonumber(noteListStatic[#noteListStatic].objTime)) do
-		initialTime = initialTime + curMPB
+	while (initialTime.Time < tonumber(noteListStatic[#noteListStatic].objTime)) do
+		initialTime = {Time = initialTime.Time + curMPB, kiai = timingPoints[curTimingPoint].kiai }
 		if timingPoints[curTimingPoint + 1] ~= nil then
-			if (initialTime > timingPoints[curTimingPoint + 1].offset) then
+			if (initialTime.Time > timingPoints[curTimingPoint + 1].offset) then
 				if tonumber(timingPoints[curTimingPoint + 1].inherited) == 1 then
 					curMPB = timingPoints[curTimingPoint + 1].mpb
 				end
@@ -112,15 +124,20 @@ function gameUpdate(dt)
 	end
 	
 	--BPMs on the score
-	if currentSongTime > BPMList[curTimingPoint] then
+	if currentSongTime > BPMList[curTimingPoint].Time then
 		scorePosY = ScreenSizeH*0.06
 		if BPMList[curTimingPoint+1] ~= nil then
 			curTimingPoint = curTimingPoint + 1
+			if BPMList[curTimingPoint+1]~= nil then
+				if tonumber(BPMList[curTimingPoint].kiai) == 1 then
+					kiaiAlpha = 160
+				end
+			end
 		end
 	end
 	
 	--Gets player input. This should later be actually done in the keyboard callback to avoid delays
-	if love.keyboard.isDown("right") and playerImageBoundaries.X2 < ingameBoundaryX2 then
+	if love.keyboard.isDown("right") and playerImageBoundaries.X2 < ingameBoundaryX2 + ScreenSizeW*0.017 then
 		if love.keyboard.isDown("lshift") then
 			PlayerX = PlayerX - (ScreenSizeW*(0.63*2)*dt)
 			run = true
@@ -129,7 +146,7 @@ function gameUpdate(dt)
 			run = false
 		end
 	end
-	if love.keyboard.isDown("left") and playerImageBoundaries.X1 > ingameBoundaryX1 then 
+	if love.keyboard.isDown("left") and playerImageBoundaries.X1 > ingameBoundaryX1 - ScreenSizeW*0.017 then 
 		if love.keyboard.isDown("lshift") then
 			PlayerX = PlayerX + (ScreenSizeW*(0.63*2)*dt)
 			run = true
@@ -149,10 +166,10 @@ function gameUpdate(dt)
 	for i = block, block+170 do
 		if noteListDinamic[i] ~= nil then
 			noteListDinamic[i].objTime = noteListStatic[i].objTime
-			noteListDinamic[i].objTime = noteListDinamic[i].objTime*(speed*0.5) - currentSongTime*(speed*0.5)
+			noteListDinamic[i].objTime = noteListDinamic[i].objTime*(speed*round(newsSpeed, 4)) - currentSongTime*(speed*round(newsSpeed, 4))
 			
 			--Collision with notes
-			if noteListDinamic[i].objTime + noteDrawOffset <= playerImageBoundaries.Y1 then	
+			if noteListDinamic[i].objTime + noteDrawOffset <= playerImageBoundaries.Y1 + ScreenSizeH*0.01 then	
 				
 				if ScreenSizeW/2-((noteListDinamic[i].x-256)*screenRatio) > playerImageBoundaries.X1-(playerImageBoundaries.X1*0.013)
 				and ScreenSizeW/2-((noteListDinamic[i].x-256)*screenRatio) < playerImageBoundaries.X2*1.013 then
@@ -169,13 +186,16 @@ function gameUpdate(dt)
 							comboPosY = ScreenSizeH*0.02
 							combo = combo + 1
 							alphaEffect = 255
+							fx:stop()
+							fx:rewind()
+							fx:setVolume(0.5)
+							fx:play()
+							newsSpeed = newsSpeed + 0.0005
 						elseif noteListDinamic[i].objType == 2 then
 							scoreAdd = scoreAdd + 100
 						end
-						fx:stop()
-						fx:setVolume(noteListDinamic[i].vol)
-						fx:play()
-						
+						noteHits = noteHits + 1
+						noteMisses = noteMisses + 1
 						noteListDinamic[i].hasBeenHit = true
 					end
 					
@@ -186,6 +206,9 @@ function gameUpdate(dt)
 					end
 					block = block + 1
 					noteListDinamic[i].hasBeenHit = true
+					noteMisses = noteMisses + 1
+					redAlert = 0
+					newsSpeed = newsSpeed - 0.0028
 					if noteListDinamic[i].objType == 1 then
 						if combo > 35 then
 							fxMiss:play()
@@ -197,13 +220,17 @@ function gameUpdate(dt)
 			end
 		end
 	end																			
-	
-	screenAlpha = lerp(screenAlpha, 60, 0.06)
-	alphaEffect = lerp(alphaEffect, 1, 0.08)
-	songVol = lerp(songVol, 0.87, 0.08)
-	score = lerp(score, scoreAdd, 0.2)
-	scorePosY = lerp(scorePosY, 0, 0.2)
-	comboPosY = lerp(comboPosY, 0, 0.2)
+	newsSpeed = clamp(newsSpeed, 0.66, 0.423)
+	screenAlpha = lerp(screenAlpha, 60, 0.06*dt*100)
+	alphaEffect = lerp(alphaEffect, 1, 0.08*dt*100)
+	songVol = lerp(songVol, 0.87, 0.08*dt*100)
+	score = lerp(score, scoreAdd, 0.2*dt*100)
+	scorePosY = lerp(scorePosY, 0, 0.2*dt*100)
+	comboPosY = lerp(comboPosY, 0, 0.2*dt*100)
+	precision = noteHits/noteMisses
+	redAlert = lerp(redAlert, 255, 0.03*dt*100)
+	kiaiAlpha = lerp(kiaiAlpha, 0, 0.06*dt*100)
+	debugCounter = debugCounter + 1
 	
 	if autoPlay then
 		if PlayerX ~= (noteListDinamic[nextNote].x-256)*screenRatio then
@@ -215,18 +242,30 @@ function gameUpdate(dt)
 		end
 	end
 	
+	--Debugging FPS and DT
+	if debugCounter % 6 == 0 then
+		gameDt = dt
+	end
+	
 end
 
 function gameDraw()
 	
 	drawBGParallax(PlayerX*0.02, my * mouseSens, false)
 	
+	if kiaiAlpha > 5 then
+		love.graphics.setColor(255, 255, 255, kiaiAlpha)
+		love.graphics.draw(kiaiGlow, 0, 0, 0, 0.8, ScreenSizeW/(kiaiGlow:getWidth()/0.14))
+		love.graphics.draw(kiaiGlow, ScreenSizeW, ScreenSizeH, 3.14159, 0.8, ScreenSizeW/(kiaiGlow:getWidth()/0.14))
+	end
+	
 	love.graphics.setColor(255, 255, 255, 255)
 	for i = block, block + 170 do
 		if noteListDinamic[i] ~= nil then
 			if noteListDinamic[i].hasBeenHit == false then
 				if tonumber(noteListDinamic[i].objTime) < ScreenSizeH then
-					getCurrentSize(noteListDinamic[i].image, "HitObject", 1.2, (noteListDinamic[i].x-256)*screenRatio, ScreenSizeH/2+noteListDinamic[i].objTime - noteDrawOffset, true)
+					love.graphics.setColor(noteListDinamic[i].r, noteListDinamic[i].g, noteListDinamic[i].b, 255)
+					getCurrentSize(noteListDinamic[i].image, "HO", 0.6, (noteListDinamic[i].x-256)*screenRatio, ScreenSizeH/2+noteListDinamic[i].objTime - noteDrawOffset, true)
 				end
 			end
 		end
@@ -249,10 +288,25 @@ function gameDraw()
 	love.graphics.setColor(80, 255, 40, alphaEffect)
 	getCurrentSize(playerImageFX, "playerEffect", 1.75*playerPaddleSize, PlayerX, -ScreenSizeH/2.17, true)
 	
-	--Score
-	love.graphics.setFont(font)
+	--Score text
+	if noteListDinamic[#noteListDinamic].hasBeenHit == true then
+		love.graphics.setFont(ingameFont)
+	else
+		love.graphics.setFont(font)
+	end
 	love.graphics.setColor(255, 255, 255, 255)
 	love.graphics.printf(round(score, 0), 0, scorePosY, 400, "left")
+	
+	--Precision text
+	love.graphics.setFont(font)
+	love.graphics.setColor(255, redAlert, redAlert, 255)
+	love.graphics.printf((round(precision, 4)*100).."%", ScreenSizeW-(ScreenSizeW*0.1), 0, ScreenSizeW*0.1, "right")
+	
+	--FPS debug
+	love.graphics.setFont(debugFont)
+	love.graphics.setColor(255, 255, 255, 255)
+	love.graphics.printf(round(gameDt*1000, 2), ScreenSizeW-(ScreenSizeW*0.1), 70, ScreenSizeW*0.1, "right")
+	love.graphics.printf(round(1000/(gameDt*1000), 2), ScreenSizeW-(ScreenSizeW*0.1), 90, ScreenSizeW*0.1, "right")
 end
 
 --THOUGHTS

@@ -2,7 +2,7 @@
 --DON'T MESS AROUND!
 
 function love.conf(t)
-t.console = true
+t.console = false
 t.window.title = "BeatFever Mania"
 --t.window.width = 864
 --t.window.height = 486
@@ -12,5 +12,5 @@ t.window.display = 2
 t.window.vsync = false
 t.window.resizable = true
 t.identity = "BeatFever-Songs"
-t.window.msaa = 0
+t.window.msaa = 1
 end

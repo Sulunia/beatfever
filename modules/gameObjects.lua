@@ -29,7 +29,7 @@ function MenuObject:init(imageIdle, imageSelected, song) --Constructor
 	self.beatmapCreator = song.beatmapCreator
 end
 
-function MenuObject:draw(xMod, yMod, alpha)
+function MenuObject:draw(xMod, yMod, alpha, dt)
 	if self.clicked then
 		love.graphics.setColor(124, 255, 124, alpha)
 		self.size, self.position, self.boundaries = getCurrentSize(self.imageSelected, self.name, self.scale, xMod, yMod, true)
@@ -38,9 +38,9 @@ function MenuObject:draw(xMod, yMod, alpha)
 		self.size, self.position, self.boundaries = getCurrentSize(self.imageIdle, self.name, self.scale, xMod, yMod, true)
 	end
 	if self.hovered then
-		self.scale = lerp(self.scale, 0.86, 0.09)
+		self.scale = lerp(self.scale, 0.86, 0.09*dt*100)
 	else
-		self.scale = lerp(self.scale, 0.80, 0.09)
+		self.scale = lerp(self.scale, 0.80, 0.09*dt*100)
 	end
 	love.graphics.setColor(255, 255, 255, alpha)
 	love.graphics.setFont(fontSelectionSongTitle)
@@ -102,7 +102,7 @@ end
 
 --------------------------------------------------------
 
-function HitObject:init(posX, posY, nTime, vol, image, objType) --Partial Implementation!
+function HitObject:init(posX, posY, nTime, vol, image, objType, colors) --Partial Implementation!
 	self.x = posX
 	self.y = posY
 	self.objTime = nTime
@@ -114,5 +114,14 @@ function HitObject:init(posX, posY, nTime, vol, image, objType) --Partial Implem
 	self.hasBeenHit = false
 	self.hasMissed = false
 	self.objType = objType
+	if objType == 2 then
+		self.r = 255
+		self.g = 255
+		self.b = 255
+	else
+		self.r = colors[1]
+		self.g = colors[2]
+		self.b = colors[3]
+	end
 end
 ---------------------------------------------------------
