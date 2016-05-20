@@ -117,7 +117,7 @@ function devideFFTList(list, factor)
 end
 
 function playInterpolated(dt) --Runs the music, but enables interpolated timer reporting. Used ingame as an interpolated timer.
-	previousFrameTimer = dt
+	previousFrameTime = love.timer.getTime()*1000
 	lastReportedPlaytime = 0
 	songTime = 0
 	songPlay:play()
@@ -127,11 +127,12 @@ function playInterpolated(dt) --Runs the music, but enables interpolated timer r
 end
 
 function getInterpolatedTimer(dt)
-	songTime = songTime + dt - previousFrameTime
-	previousFrameTime = dt
+	songTime =songTime + (love.timer.getTime()*1000) - previousFrameTime
+	previousFrameTime = love.timer.getTime()*1000
 	if songPlay:tell("seconds")*1000 ~= lastReportedPlaytime then --Updates music time, but with easing
 		songTime = (songTime + (songPlay:tell("seconds")*1000))/2
 		lastReportedPlaytime = songPlay:tell("seconds")*1000
+		eased = true
 	end
 	--for more info about this, take a look
 	--https://www.reddit.com/r/gamedev/comments/13y26t/how_do_rhythm_games_stay_in_sync_with_the_music/

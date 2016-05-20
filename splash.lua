@@ -24,7 +24,7 @@ local hasBeenLoaded = false
 local angle = 0
 
 -- Logo scale values
-local sizeMultLogo = 1
+local sizeMultLogo = 9
 local sizeNoiseLogo = 1
 local splashDT = 0.17
 

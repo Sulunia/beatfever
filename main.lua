@@ -88,7 +88,7 @@ function love.update(dt)
 	
 	--FPS at 120 on menus, 200 ingame
 	if Screen == 2 then
-		min_dt = 1/60
+		min_dt = 1/120
 	else
 		min_dt = 1/60
 	end

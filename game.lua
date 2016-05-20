@@ -103,7 +103,7 @@ end
 
 function gameUpdate(dt)
 	--Var updates
-	currentSongTime = getInterpolatedTimer(dt)
+	currentSongTime = getInterpolatedTimer() - var
 	noteDrawOffset = ScreenSizeH - (ScreenSizeH - playerImageBoundaries.Y1)
 	screenRatio = ScreenSizeH/384
 	speed = (ScreenSizeH/ScreenSizeHOld)*screenRatio --Speed at which notes fall
