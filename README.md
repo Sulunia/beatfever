@@ -30,4 +30,4 @@ I'll be fixing that very soon, since i'm making an official theme song for this,
 Just drag and drop any .osz files in the Selection Screen. After a tad bit it should pop up on the list.
 
 -------
-Any questions, rants or requests, [drop me an email here](pedrorocha@gec.inatel.br)
+Any questions, rants or requests, [drop me an email here](mailto:pedrorocha@gec.inatel.br)
