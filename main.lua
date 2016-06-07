@@ -66,7 +66,7 @@ function love.load()
 	
 	lowerScreenAlpha = love.graphics.newImage("img/gradient.png")
 	
-	
+
 	splashLoad()
 end
 
@@ -85,6 +85,7 @@ function love.update(dt)
 	-- Make sure mouse clicks only once
 	oldMouseClicked = newMouseClicked
 	newMouseClicked = love.mouse.isDown(1)
+	
 	
 	--FPS at 120 on menus, 200 ingame
 	if Screen == 2 then
@@ -128,10 +129,10 @@ function love.update(dt)
 		gameUpdate(dt)
 	end
 	
-
 end
 
 function love.draw()
+	
 	-- Screen switcharoo magic
 	if Screen == 0 then
 		splashDraw()

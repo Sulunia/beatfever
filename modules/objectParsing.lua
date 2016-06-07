@@ -92,7 +92,7 @@ function objectParser.parseSlider(str, combo)
 		--print("Obj time "..objTime.." duration is "..sliderDurationWhole)
 		local repeatGeneration = 1
 		
-		local ticks = math.ceil(sliderDuration/(beatLength/4))
+		local ticks = sliderDuration/(beatLength/4)
 		--print(ticks)
 		
 		if newCombo == true then
@@ -112,7 +112,7 @@ function objectParser.parseSlider(str, combo)
 
 				-- Put the connecting notes inside the table
 				local ticks = sliderDuration/(beatLength/4)
-				for i = 0.14, 0.87, 0.2 do
+				for i = 1/ticks, 1, 1/ticks do
 					bx, by = curve:evaluate(i)
 					table.insert(slider, HitObject(bx, by, objTime+(i*sliderDuration)+(sliderDuration*(repeatGeneration-1)), 0.1, slidertickGraphic, 2, comboColours[currentCombo]))
 				end
@@ -126,7 +126,7 @@ function objectParser.parseSlider(str, combo)
 				-- Put the connecting notes reversed in the table
 				local ticks = sliderDuration/(beatLength/4)
 				
-				for i = 0.87, 0.14, -0.2 do
+				for i = 1-(1/ticks), 1/ticks, -1/ticks do
 					bx, by = curve:evaluate(i)
 					table.insert(slider, HitObject(bx, by, (objTime+(math.abs(1-i)*sliderDuration))+(sliderDuration*(repeatGeneration-1)), 0.1, slidertickGraphic, 2, comboColours[currentCombo]))
 				end

@@ -327,9 +327,9 @@ function splashDraw()
 		love.graphics.translate(-mx * mouseSens + - ScreenSizeW / 2, -my * mouseSens + - ScreenSizeH / 2)
 		
 		if (isHovered(logoBoundaries)) then
-			sizeMultLogo = lerp(sizeMultLogo, 1.3, 0.1*splashDT*100)
+			sizeMultLogo = lerp(sizeMultLogo, 1.50, 0.1*splashDT*100)
 		else
-			sizeMultLogo = lerp(sizeMultLogo, 1, 0.06*splashDT*100)
+			sizeMultLogo = lerp(sizeMultLogo, 1.27, 0.06*splashDT*100)
 		end		
 		
 		-- Reset color
