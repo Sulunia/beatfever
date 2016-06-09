@@ -2,9 +2,8 @@ local moduleName = "[Ingame]"
 
 local mouseSens = 0.01
 local PlayerX = 0
-local debugCounter = 0
 local alphaEffect = 1
-local playerPaddleSize = 0.86
+local playerPaddleSize = 0.7
 local noteList = {}
 local currentSongTime = 0
 local songSkippedIntro = false
@@ -13,9 +12,8 @@ local screenRatio = 1
 local ingameBoundaryX1 = 0
 local ingameBoundaryX2 = 0
 local ingameCalculatedScreenResX = 512*1
-local gameDt = 0
 
-autoPlay = false
+autoPlay = true
 local nextNote = 1
 local songTimeOld = 0
 local noteDrawOffset = 0
@@ -28,7 +26,6 @@ local scoreAdd = 0
 local scorePosY = 0
 local comboPosY = 0
 local newsSpeed = 0.4
-local leadIn = 0
 
 local precision = 0
 local noteHits = 1
@@ -36,7 +33,7 @@ local noteMisses = 1
 local block = 1
 local redAlert = 255
 
-globalOffset = 29
+var = 1
 
 function gameLoad(selectedSong)
 	love.graphics.setBackgroundColor(0, 0, 0, 255)
@@ -47,7 +44,7 @@ function gameLoad(selectedSong)
 	playerImageFX = love.graphics.newImage("img/garsom_hitech.png")
 	playerImageNormal = love.graphics.newImage("img/garsom_semswag.png")
 	
-	pelletHitCircle = love.graphics.newImage("img/hexa.png")
+	pelletHitCircle = love.graphics.newImage("img/fruit_3.png")
 	pelletSlidertick = love.graphics.newImage("img/fruteenha.png")
 	
 	fx = love.audio.newSource("uisounds/normal-hitclap.wav", "static")
@@ -56,26 +53,12 @@ function gameLoad(selectedSong)
 	fxMiss:setVolume(1.0)
 	
 	kiaiGlow = love.graphics.newImage("img/grad.png")
-	
-	--Particle System setup
-	particleClickTexture = love.graphics.newImage("img/crashParticle.png")
-	particleClick = love.graphics.newParticleSystem(particleClickTexture, 60)
-		particleClick:setParticleLifetime(1, 1.6)
-		particleClick:setSizeVariation(1)
-		particleClick:setLinearAcceleration(-120, 26, 120, 40)
-		particleClick:setColors(255, 255, 255, 255, 255, 255, 255, 0) -- Fade to transparency.
-		particleClick:setDirection(math.rad(90))
-		particleClick:setSpin(1)
-		particleClick:setSpeed(0, -170)
-	--End of particle system setup
-	
 	--End of graphics loading	
 	
 	--Parse stuff and load music
 	debugLog("Parsing selected file", 1, moduleName)
 	parser.loadOsuFile(selectedSong.filePath)
 	loadSong(selectedSong.audioFile)
-	leadIn = parser.getAudioLeadIn()
 	
 	--Generate a list suitable for messing around with it's values and a static list for original value referencing
 	noteListStatic = parser.getHitObjects(pelletHitCircle, pelletSlidertick)
@@ -104,7 +87,7 @@ function gameLoad(selectedSong)
 	
 	--Begins game
 	debugLog("Playing the song using interpolated timer", 1, moduleName)
-	playInterpolated(dt, leadIn)
+	playInterpolated(dt)
 	playerImageSize, playerImagePos, playerImageBoundaries = getCurrentSize(playerImageNormal, "player", playerPaddleSize, PlayerX, -ScreenSizeH/2.17, false)
 	
 	--Tells the player how to skip song intro
@@ -118,12 +101,10 @@ end
 
 function gameUpdate(dt)
 	--Var updates
-	particleClick:setSizes(ScreenSizeH/700, ScreenSizeH/650, ScreenSizeH/600)
-	currentSongTime = getInterpolatedTimer() - globalOffset
+	currentSongTime = getInterpolatedTimer(dt)
 	noteDrawOffset = ScreenSizeH - (ScreenSizeH - playerImageBoundaries.Y1)
 	screenRatio = ScreenSizeH/384
 	speed = (ScreenSizeH/ScreenSizeHOld)*screenRatio --Speed at which notes fall
-	particleClick:setSpeed(0, clamp(-170-combo, -170, -500))
 	
 	ingameCalculatedScreenResX = 512*screenRatio
 	ingameBoundaryX1 = (ScreenSizeW - ingameCalculatedScreenResX)/2
@@ -146,7 +127,7 @@ function gameUpdate(dt)
 		if BPMList[curTimingPoint+1] ~= nil then
 			curTimingPoint = curTimingPoint + 1
 			if BPMList[curTimingPoint+1]~= nil then
-				if tonumber(BPMList[curTimingPoint].kiai) == 1 then
+				if tonumber(BPMList[curTimingPoint+1].kiai) == 1 then
 					kiaiAlpha = 160
 				end
 			end
@@ -200,16 +181,13 @@ function gameUpdate(dt)
 						block = block + 1
 						if noteListDinamic[i].objType == 1 then
 							scoreAdd = scoreAdd + (300 * combo)
-							comboPosY = ScreenSizeH*0.03
+							comboPosY = ScreenSizeH*0.02
 							combo = combo + 1
 							alphaEffect = 255
 							fx:stop()
 							fx:rewind()
 							fx:setVolume(0.5)
 							fx:play()
-							particleClick:setPosition((ScreenSizeW/2-((noteListDinamic[i].x-256)*screenRatio)), playerImageBoundaries.Y1)
-							particleClick:setColors(noteListDinamic[i].r, noteListDinamic[i].g, noteListDinamic[i].b, 170, noteListDinamic[i].r, noteListDinamic[i].g, noteListDinamic[i].b, 0)
-							particleClick:emit(15)
 							newsSpeed = newsSpeed + 0.0005
 						elseif noteListDinamic[i].objType == 2 then
 							scoreAdd = scoreAdd + 100
@@ -250,30 +228,16 @@ function gameUpdate(dt)
 	precision = noteHits/noteMisses
 	redAlert = lerp(redAlert, 255, 0.03*dt*100)
 	kiaiAlpha = lerp(kiaiAlpha, 0, 0.06*dt*100)
-	debugCounter = debugCounter + 1
 	
 	if autoPlay then
 		if PlayerX ~= (noteListDinamic[nextNote].x-256)*screenRatio then
-			if PlayerX > (noteListDinamic[nextNote].x-256)*screenRatio then
-				PlayerX = PlayerX - (((ScreenSizeW*0.6)*dt)*2)
-			elseif PlayerX < (noteListDinamic[nextNote].x-256)*screenRatio then
-				PlayerX = PlayerX + (((ScreenSizeW*0.6)*dt)*2)
+			if PlayerX >= (noteListDinamic[nextNote].x-256)*screenRatio then
+				PlayerX = PlayerX - ((ScreenSizeW*0.6)*dt)
+			else
+				PlayerX = PlayerX + ((ScreenSizeW*0.6)*dt)
 			end
-			
-			if (PlayerX +(((ScreenSizeW*0.6)*dt)*2) > (noteListDinamic[nextNote].x-256)*screenRatio)
-			and (PlayerX -(((ScreenSizeW*0.6)*dt)*2) < (noteListDinamic[nextNote].x-256)*screenRatio) then
-				PlayerX = (noteListDinamic[nextNote].x-256)*screenRatio
-			end
-			
 		end
 	end
-	
-	--Debugging FPS and DT
-	if debugCounter % 6 == 0 then
-		gameDt = dt
-	end
-	
-	particleClick:update(dt*4.5)
 	
 end
 
@@ -283,26 +247,19 @@ function gameDraw()
 	
 	if kiaiAlpha > 5 then
 		love.graphics.setColor(255, 255, 255, kiaiAlpha)
-		love.graphics.draw(kiaiGlow, 0, 0, 0, 0.8, ScreenSizeW/(kiaiGlow:getWidth()/0.14))
-		love.graphics.draw(kiaiGlow, ScreenSizeW, ScreenSizeH, 3.14159, 0.8, ScreenSizeW/(kiaiGlow:getWidth()/0.14))
+		love.graphics.draw(kiaiGlow, 0, ScreenSizeH, (3*3.14159)/2, var, ScreenSizeW/kiaiGlow:getWidth())
 	end
-	
-	--CrashEffect
-	love.graphics.setColor(255, 255, 255, 255)
-	love.graphics.draw(particleClick,0,0)
 	
 	love.graphics.setColor(255, 255, 255, 255)
 	for i = block, block + 170 do
 		if noteListDinamic[i] ~= nil then
 			if noteListDinamic[i].hasBeenHit == false then
 				if tonumber(noteListDinamic[i].objTime) < ScreenSizeH then
-					love.graphics.setColor(noteListDinamic[i].r, noteListDinamic[i].g, noteListDinamic[i].b, 255)
-					getCurrentSize(noteListDinamic[i].image, "HO", 0.6, (noteListDinamic[i].x-256)*screenRatio, ScreenSizeH/2+noteListDinamic[i].objTime - noteDrawOffset, true)
+					getCurrentSize(noteListDinamic[i].image, "HitObject", 1.6, (noteListDinamic[i].x-256)*screenRatio, ScreenSizeH/2+noteListDinamic[i].objTime - noteDrawOffset, true)
 				end
 			end
 		end
 	end
-	
 	
 	if run then
 		love.graphics.setColor(20, 255, 20, 255)
@@ -321,26 +278,19 @@ function gameDraw()
 	love.graphics.setColor(80, 255, 40, alphaEffect)
 	getCurrentSize(playerImageFX, "playerEffect", 1.75*playerPaddleSize, PlayerX, -ScreenSizeH/2.17, true)
 	
-	
 	--Score text
-	if noteListDinamic[#noteListDinamic].hasBeenHit == true then
-		love.graphics.setFont(ingameFont)
-	else
-		love.graphics.setFont(font)
-	end
+	love.graphics.setFont(font)
 	love.graphics.setColor(255, 255, 255, 255)
 	love.graphics.printf(round(score, 0), 0, scorePosY, 400, "left")
 	
 	--Precision text
-	love.graphics.setFont(font)
 	love.graphics.setColor(255, redAlert, redAlert, 255)
 	love.graphics.printf((round(precision, 4)*100).."%", ScreenSizeW-(ScreenSizeW*0.1), 0, ScreenSizeW*0.1, "right")
 	
 	--FPS debug
-	love.graphics.setFont(debugFont)
 	love.graphics.setColor(255, 255, 255, 255)
-	--love.graphics.printf(round(gameDt*1000, 2), ScreenSizeW-(ScreenSizeW*0.1), 70, ScreenSizeW*0.1, "right")
-	--love.graphics.printf(round(1000/(gameDt*1000), 2), ScreenSizeW-(ScreenSizeW*0.1), 90, ScreenSizeW*0.1, "right")
+	love.graphics.printf(round(love.timer.getFPS(), 2), ScreenSizeW-(ScreenSizeW*0.1), 34, ScreenSizeW*0.1, "right")
+	
 end
 
 --THOUGHTS
