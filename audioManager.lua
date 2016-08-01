@@ -1,5 +1,6 @@
---fftHelper library
---Wraps around functions for visualization eyecandy
+--AudioManager library
+--Wraps around functions for visualization eyecandy and general audio control
+
 local moduleName = "[Audio manager]"
 
 local songData = nil
@@ -15,6 +16,13 @@ local songTime = 0
 
 function loadSong(songLoad, loadData)
 	debugLog("Loading song at filepath "..songLoad, 1, moduleName)
+	
+	--Stops current music from playing, much like swapping a CD
+	if songPlay ~= nil then
+		if songPlay:isPlaying() then
+			songPlay:stop()
+		end
+	end
 	loadedSong = songLoad
 	loadedSongData = false
 	if loadData then 
@@ -32,6 +40,7 @@ function loadSong(songLoad, loadData)
 end
 
 function loadSongData()
+	--Loads the song data, used only for FFT eyecandy
 	if not loadedSongData then
 		debugLog("Loading song data for currently loaded music")
 		songData = love.sound.newSoundData(loadedSong)
@@ -79,6 +88,14 @@ function musicRetrieveSize()
 	end
 end
 
+function musicDuration()
+	if songPlay == nil then
+		return 0
+	else
+		return songPlay:getDuration("seconds")
+	end
+end
+
 function musicPause()
 	debugLog("Pausing current song", 1, moduleName)
 	songPlay:pause()
@@ -116,18 +133,23 @@ function devideFFTList(list, factor)
 	return list
 end
 
-function playInterpolated(dt) --Runs the music, but enables interpolated timer reporting. Used ingame as an interpolated timer.
-	previousFrameTime = love.timer.getTime()*1000
+function playInterpolated(dt, leadIn) --Runs the music, but enables interpolated timer reporting. Used ingame as an interpolated timer.
+	previousFrameTime = love.timer.getTime()*1000 +  leadIn
 	lastReportedPlaytime = 0
 	songTime = 0
-	songPlay:play()
 	songPlay:setVolume(0.86)
 	songPlay:setPitch(1)
 	debugLog("Started interpolated timer playback.", 1, moduleName)
 end
 
 function getInterpolatedTimer(dt)
-	songTime =songTime + (love.timer.getTime()*1000) - previousFrameTime
+	songTime = songTime + (love.timer.getTime()*1000) - previousFrameTime
+	
+	if songTime >= 0 and songPlay:isPlaying() == false then
+		--if the initial audioLeadIn is over, we start playing the music
+		songPlay:play()
+	end
+	
 	previousFrameTime = love.timer.getTime()*1000
 	if songPlay:tell("seconds")*1000 ~= lastReportedPlaytime then --Updates music time, but with easing
 		songTime = (songTime + (songPlay:tell("seconds")*1000))/2
@@ -136,5 +158,6 @@ function getInterpolatedTimer(dt)
 	end
 	--for more info about this, take a look
 	--https://www.reddit.com/r/gamedev/comments/13y26t/how_do_rhythm_games_stay_in_sync_with_the_music/
+	
 	return songTime
 end

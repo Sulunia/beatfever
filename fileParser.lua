@@ -40,6 +40,17 @@ function parser.getAudioFileName()
 	return audioFile[2]
 end
 
+function parser.getAudioLeadIn()
+	for key, line in ipairs(fileLines) do
+		if #line>0 then
+			if string.find(line, "AudioLeadIn:") ~= nil then
+				audioLead = string.split(line, ': ')
+			end
+		end
+	end
+	return audioLead[2]
+end
+
 function parser.getPreviewTime()
 	for key, line in ipairs(fileLines) do
 		if #line>0 then

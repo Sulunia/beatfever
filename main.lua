@@ -18,7 +18,7 @@ bit = require("bit")
 reloadSelectionScreen = false
 
 -- Enables debugging in the game section, can be enabled by lovedebug console
-debuggingEnabled = false
+debuggingEnabled = true
 
 
 -- Module name for debug infos
@@ -129,6 +129,7 @@ function love.update(dt)
 		gameUpdate(dt)
 	end
 	
+	--musicVolume(0)
 end
 
 function love.draw()

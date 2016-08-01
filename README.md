@@ -7,7 +7,7 @@
 
 ![Beatfever SplashScreen](http://i.imgur.com/6FlfIna.png)
 
->**Current state:** _On hold! Will be back with updates in July_
+>**Current state:** _Active development!_
 
 #FAQ ~ Frequently Asked Questions
 ####What's this?
