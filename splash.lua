@@ -219,6 +219,8 @@ function splashUpdate(dt)
 	
 	if clickedUp >= 0.9 * ScreenSizeH/4 then
 		menuOpened = true
+	else
+		menuOpened = false
 	end
 	
 	-- Update menu positions

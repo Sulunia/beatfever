@@ -18,7 +18,7 @@ bit = require("bit")
 reloadSelectionScreen = false
 
 -- Enables debugging in the game section, can be enabled by lovedebug console
-debuggingEnabled = true
+debuggingEnabled = false
 
 
 -- Module name for debug infos
@@ -44,6 +44,7 @@ font = love.graphics.newFont("fonts/bignoodle.ttf", ScreenSizeH / 16)
 fontSelectionSongTitle = love.graphics.newFont("fonts/bignoodle.ttf", ScreenSizeH / 25)
 fontSelectionArtistName = love.graphics.newFont("fonts/bignoodle.ttf", ScreenSizeH / 32)
 ingameFont = love.graphics.newFont("fonts/bignoodle.ttf", ScreenSizeH / 8)
+fontRating = love.graphics.newFont("fonts/bignoodle.ttf", clamp(ScreenSizeH / 1.6, ScreenSizeH, 1))
 
 -- Window settings
 --Window = love.window.setMode(1280, 720, {resizable = true, vsync = false})
@@ -107,10 +108,17 @@ function love.update(dt)
 		ScreenSizeHOld = ScreenSizeH
 		ScreenSizeWOld = ScreenSizeW
 		debugLog("Screen size changed! Redefining certain assets...", 2, moduleName)
+		font = love.graphics.newFont("fonts/bignoodle.ttf", ScreenSizeH / 16)
+		fontSelectionSongTitle = nil 
+		fontSelectionArtistName = nil 
+		ingameFont = nil 
+		fontRating = nil
 		font = love.graphics.newFont("fonts/bignoodle.ttf", clamp(ScreenSizeH / 16, ScreenSizeH, 1))
 		fontSelectionSongTitle = love.graphics.newFont("fonts/bignoodle.ttf", clamp(ScreenSizeH / 25, ScreenSizeH, 1))
 		fontSelectionArtistName = love.graphics.newFont("fonts/bignoodle.ttf", clamp(ScreenSizeH / 32, ScreenSizeH, 1))
 		ingameFont = love.graphics.newFont("fonts/bignoodle.ttf", ScreenSizeH / 8)
+		fontRating = love.graphics.newFont("fonts/bignoodle.ttf", clamp(ScreenSizeH / 1.6, ScreenSizeH, 1))
+		collectgarbage("collect")
 	end
 	
 	-- Update FPS only on some frames
@@ -127,8 +135,9 @@ function love.update(dt)
 		selectionUpdate(dt)
 	elseif Screen == 2 then
 		gameUpdate(dt)
+	elseif Screen == 3 then
+		gameOverUpdate(dt)
 	end
-	
 	--musicVolume(0)
 end
 
@@ -141,6 +150,8 @@ function love.draw()
 		selectionDraw()
 	elseif Screen == 2 then
 		gameDraw()
+	elseif Screen == 3 then
+		gameOverDraw()
 	end
 	Count = Count + 1
 	

@@ -5,7 +5,6 @@ local mouseSens = 0.01
 local PlayerX = 0
 local alphaEffect = 1
 local playerPaddleSize = 0.86
-local noteList = {}
 local currentSongTime = 0
 local songSkippedIntro = false
 local songVol = 0.87
@@ -35,6 +34,7 @@ local scorePosY = 0
 local comboPosY = 0
 local newsSpeed = 0.4
 local leadIn = 0
+local endDelay = 0
 
 --Gameplay UI related vars
 local precision = 0
@@ -223,11 +223,14 @@ function gameUpdate(dt)
 							fx:rewind()
 							fx:setVolume(0.5)
 							fx:play()
+							--Emit particles
 							particleClick:setPosition((ScreenSizeW/2-((noteListDinamic[i].x-256)*screenRatio)), playerImageBoundaries.Y1)
 							particleClick:setColors(noteListDinamic[i].r, noteListDinamic[i].g, noteListDinamic[i].b, 170, noteListDinamic[i].r, noteListDinamic[i].g, noteListDinamic[i].b, 0)
 							particleClick:emit(15)
+							--Speed up game
 							newsSpeed = newsSpeed + 0.0005
 						elseif noteListDinamic[i].objType == 2 then
+							--Pellet
 							scoreAdd = scoreAdd + 100
 						end
 						--Updates precisions
@@ -263,8 +266,9 @@ function gameUpdate(dt)
 	
 	
 	--Checks to see if the last note has been hit
-	if noteListDinamic[#noteListDinamic].hasBeenHit == true then
+	if noteListDinamic[#noteListDinamic].hasBeenHit == true and gameOver == false then
 		gameOver = true
+		endDelay = currentSongTime
 	end
 	
 	
@@ -279,14 +283,6 @@ function gameUpdate(dt)
 	precision = noteHits/noteMisses
 	redAlert = lerp(redAlert, 255, 0.03*dt*100)
 	kiaiAlpha = lerp(kiaiAlpha, 0, 0.06*dt*100)
-	
-	if not gameOver then
-		screenAlpha = lerp(screenAlpha, 60, 0.06*dt*100)
-	else
-		screenAlpha = lerp(screenAlpha, 120, 0.04*dt*100)
-		playerAlpha = lerp(playerAlpha, 0, 0.05*dt*100)
-	end
-	
 	
 	--Updates particle systems
 	particleClick:update(dt*4.5)
@@ -308,7 +304,24 @@ function gameUpdate(dt)
 		end
 	end
 	
-	
+	if not gameOver then
+		screenAlpha = lerp(screenAlpha, 60, 0.06*dt*100)
+	else
+		playerAlpha = lerp(playerAlpha, 0, 0.05*dt*100)
+		if currentSongTime >= endDelay + 3000 then
+			screenAlpha = lerp(screenAlpha, 0, 0.16*dt*100)
+			--Fade screen and dispose of game elements
+			if screenAlpha <= 0.7 then
+				--Finished fading, dispose and go to gameOver stat screen
+				gameDispose()
+				gameOverLoad(scoreAdd, precision)
+				Screen = 3
+			end
+		else
+			--Wait 3 seconds before fading
+			screenAlpha = lerp(screenAlpha, 140, 0.04*dt*100)
+		end
+	end
 	
 end
 
@@ -370,6 +383,70 @@ function gameDraw()
 	--FPS debug
 	love.graphics.setFont(debugFont)
 	love.graphics.setColor(255, 255, 255, 255)
+end
+
+function gameDispose()
+	--Resets vars to nil
+	local oldmem = collectgarbage("count")
+	noteListDinamic = nil
+	noteListStatic = nil
+	playerImageFX = nil
+	playerImageNormal = nil
+	pelletHitCircle = nil
+	pelletSlidertick = nil
+	fx = nil
+	fxMiss = nil
+	kiaiGlow = nil
+	particleClickTexture = nil
+	particleClick = nil
+	BPMList = nil
+	collectgarbage("collect")
+	local newmem = collectgarbage("count")
+	debugLog("Disposed of resources! "..round(oldmem-newmem, 3).."kB memory freed.", 1, moduleName)
+end
+
+function gameReset()
+
+	mouseSens = 0.01
+	PlayerX = 0
+	alphaEffect = 1
+	playerPaddleSize = 0.86
+	currentSongTime = 0
+	songSkippedIntro = false
+	songVol = 0.87
+	playerAlpha = 255
+	gameOver = false
+	
+	
+	screenRatio = 1
+	ingameBoundaryX1 = 0
+	ingameBoundaryX2 = 0
+	ingameCalculatedScreenResX = 512*1
+	
+	
+	
+	
+	nextNote = 1
+	songTimeOld = 0
+	noteDrawOffset = 0
+	combo = 1
+	run = false
+	kiaiEnabled = 0
+	kiaiAlpha = 0
+	score = 0
+	scoreAdd = 0
+	scorePosY = 0
+	comboPosY = 0
+	newsSpeed = 0.4
+	leadIn = 0
+	endDelay = 0
+	
+	
+	precision = 0
+	noteHits = 1
+	noteMisses = 1
+	block = 1
+	redAlert = 255
 end
 
 --THOUGHTS

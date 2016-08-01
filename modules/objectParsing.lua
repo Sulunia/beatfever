@@ -25,6 +25,19 @@ function objectParser.setNoteGraphics(c, s)
 	-- Reset timing points in parser for sliders
 	fileTimingPoints = nil
 end
+
+function objectParser.reset()
+	hitcircleGraphic = nil
+	slidertickGraphic = nil
+	fileTimingPointsInherited = {}
+	fileTimingPointsBPM = {}
+	fileTimingPoints = {}
+	timingPointIndex = 1
+	comboColours = {}
+	currentComboSize = 0
+	currentCombo = 1
+
+end
 	
 function objectParser.parseHitCircle(str, combo)
 	assert(hitcircleGraphic, "No image loaded!")

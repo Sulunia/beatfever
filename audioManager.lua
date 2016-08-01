@@ -8,6 +8,7 @@ local songPlay = nil
 local songSize = nil
 local songCurrent = nil
 local loadedSong = nil
+local songPlayedIngame = false
 local loadedSongData = false
 
 local lastReportedPlaytime = 0
@@ -25,6 +26,7 @@ function loadSong(songLoad, loadData)
 	end
 	loadedSong = songLoad
 	loadedSongData = false
+	songPlayedIngame = false
 	if loadData then 
 		songData = love.sound.newSoundData(songLoad)
 		debugLog("Information: Sampling rate is "..songData:getSampleRate(), 1, moduleName)
@@ -145,9 +147,10 @@ end
 function getInterpolatedTimer(dt)
 	songTime = songTime + (love.timer.getTime()*1000) - previousFrameTime
 	
-	if songTime >= 0 and songPlay:isPlaying() == false then
+	if songTime >= 0 and songPlay:isPlaying() == false and songPlayedIngame == false then
 		--if the initial audioLeadIn is over, we start playing the music
 		songPlay:play()
+		songPlayedIngame = true
 	end
 	
 	previousFrameTime = love.timer.getTime()*1000

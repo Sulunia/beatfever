@@ -188,6 +188,15 @@ function parser.getComboColors()
 		--R, G, B
 		table.insert(colors, newComboColour)
 	end
+	
+	--What if the beatmap has no colour setting?
+	if colors[1] == nil then
+		debugLog("No colors could be found in beatmap! Returning default values..", 2, moduleName)
+		newComboColour = {255, 255, 255}
+		--R, G, B
+		table.insert(colors, newComboColour)
+	end
+	
 	return colors
 end
 

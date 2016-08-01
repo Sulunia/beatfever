@@ -202,6 +202,23 @@ function selectionDispose()
 	debugLog("Disposed of resources! "..round(memoryAmountBefore-memoryAmountAfter, 3).."kB memory freed.", 1, moduleName)
 end
 
+function selectionReset()
+	songVol = 0.82
+	lastClickedOption = 1
+	fadePos = 0
+	gameTransition = false
+	xButtonModifier = 0
+	buttonAlpha = 0
+	
+	
+	backButtonPos = {}
+	backButtonSize = {}
+	backButtonBoundaries = {}
+	backMult = 1
+	backX = 0
+
+end
+
 function love.filedropped(file)
 	--Checks if file is a .osz file
 	filePath = file:getFilename()
