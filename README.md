@@ -5,7 +5,7 @@
 ![love2D version](https://img.shields.io/badge/Love2D-0.10.1-EA316E.svg)
 
 
-![Beatfever SplashScreen](http://i.imgur.com/6FlfIna.png)
+![Beatfever SplashScreen](http://i.imgur.com/8bgqDiQ.gif)
 
 >**Current state:** _Active development!_
 
