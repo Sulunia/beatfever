@@ -19,13 +19,13 @@ Currently, _BeatFever_ runs with _minor_ modifications in Android, iOS(untested)
 On desktop systems, anything that supports OpenGLES 2.1 or OpenGL 2 and has anything that _vaguely resembles a processor_ should run this with no issues.
 
 ####What's done and what's coming up next?
-The game in itself works already, but hasn't all the mechanics implemented yet. Song installation and selection works, but still needs updates. There is also no end game stat screen yet. We're aiming at an eventual storyboard support aswell.
+The game in itself works already, but hasn't all the mechanics implemented yet. Song installation and selection works, but still needs updates. We're aiming at an eventual storyboard support aswell.
 
-####How do i run this?
-The github version of the game will most likely crash on startup complaining about a "song.mp3". This is because a song is currently hardcoded to be loaded at game startup on a folder called "Songs".
-I'll be fixing that very soon, since i'm making an official theme song for this, but in the meantime, creating a folder called "Songs" and putting any "song.mp3" music file in it will make it work.
+####How do I run this?
+The GitHub version of the game will most likely crash on startup complaining about a "song.mp3". This is because a song is currently hardcoded to be loaded at game startup on a folder called "Songs".
+I'll be fixing that very soon, since I'm making an official theme song for this, but in the meantime, creating a folder called "Songs" and putting any "song.mp3" music file in it will make it work.
 
-####How do i install new songs?
+####How do I install new songs?
 Just drag and drop any .osz files in the Selection Screen. After a tad bit it should pop up on the list.
 
 -------
