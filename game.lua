@@ -1,5 +1,8 @@
 local moduleName = "[Ingame]"
 
+var = 0
+var2 = 0
+
 --General background vars/Core
 local mouseSens = 0.01
 local PlayerX = 0
@@ -73,11 +76,12 @@ function gameLoad(selectedSong)
 	particleClick = love.graphics.newParticleSystem(particleClickTexture, 60)
 		particleClick:setParticleLifetime(1, 1.6)
 		particleClick:setSizeVariation(1)
-		particleClick:setLinearAcceleration(-120, 26, 120, 40)
+		particleClick:setLinearAcceleration(-30, 20, 30, 120)
 		particleClick:setColors(255, 255, 255, 255, 255, 255, 255, 0) -- Fade to transparency.
 		particleClick:setDirection(math.rad(90))
 		particleClick:setSpin(1)
-		particleClick:setSpeed(0, -170)
+		particleClick:setSpeed(-50, -290)
+		particleClick:setSpread(3.14159)
 	--End of particle system setup
 	
 	--End of graphics loading	
@@ -135,7 +139,7 @@ function gameUpdate(dt)
 	noteDrawOffset = ScreenSizeH - (ScreenSizeH - playerImageBoundaries.Y1)
 	screenRatio = ScreenSizeH/384
 	speed = (ScreenSizeH/ScreenSizeHOld)*screenRatio --Speed at which notes fall
-	particleClick:setSpeed(0, clamp(-170-combo, -170, -500))
+	--particleClick:setSpeed(0, clamp(-170-combo, -170, -500))
 	
 	ingameCalculatedScreenResX = 512*screenRatio
 	ingameBoundaryX1 = (ScreenSizeW - ingameCalculatedScreenResX)/2
@@ -365,11 +369,9 @@ function gameDraw()
 	love.graphics.setFont(ingameFont)
 	love.graphics.setColor(255, 255, 255, playerAlpha)
 	love.graphics.printf(combo,playerImageBoundaries.X1, (ScreenSizeH/1.8)+(comboPosY/2), playerImageBoundaries.X2 - playerImageBoundaries.X1, "center" )
-	
 	--Glow effect
 	love.graphics.setColor(80, 255, 40, alphaEffect)
 	getCurrentSize(playerImageFX, "playerEffect", 1.75*playerPaddleSize, PlayerX, -ScreenSizeH/2.17, true)
-	
 	
 	--Score text
 	love.graphics.setColor(255, 255, 255, playerAlpha)

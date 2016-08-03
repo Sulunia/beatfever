@@ -1,7 +1,5 @@
 moduleName = "[GameOverScreen]"
 
-var = 0
-var2 = 0
 local mouseSens = 0.01 --this var has to be global on main.lua
 local rating = "??"
 local scoreRecv = nil
