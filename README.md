@@ -6,7 +6,9 @@
 
 ![beatfever](https://cloud.githubusercontent.com/assets/57977/17342490/f5032d10-58cf-11e6-8f58-e3c897efe11f.gif)
 
->**Current state:** _Active development!_
+>**Current state:** _Frozen_
+Reason: osu! is being open-sourced. I'm considering maybe in the near future help out with it's development, if possible.
+This doesn't mean the project is dead though!
 
 #FAQ ~ Frequently Asked Questions
 ####What's this?
